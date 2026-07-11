@@ -18,7 +18,7 @@ export default function Home() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontWeight: 700, fontSize: "19px" }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain", filter: "brightness(10)" }} />
+          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
           Road Safety Dar es Salaam
         </div>
         <nav style={{ display: "flex", alignItems: "center", gap: "24px" }}>
@@ -37,7 +37,7 @@ export default function Home() {
               <span style={{ color: "#60A5FA" }}>Dar es Salaam</span>
             </h1>
             <p style={{ margin: "12px 0 0", fontSize: "20px", color: "#94A3B8", maxWidth: "56ch" }}>
-              Real-time accident hotspot intelligence for Tanzania&apos;s commercial capital. Crowdsourced reports, official police data, and AI-powered safety insights for every junction.
+              Real-time accident hotspot intelligence for Tanzania's commercial capital. Crowdsourced reports, official police data, and AI-powered safety insights for every junction.
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "16px", position: "relative", flexShrink: 0 }}>
@@ -282,6 +282,32 @@ export default function Home() {
         .district-name { font-family: "Hubot Sans","Nunito","Quicksand",system-ui,sans-serif; font-weight: 700; font-size: 16px; color: #0F172A; }
         .district-wards { font-size: 12px; color: #475569; margin-top: 4px; }
         .site-footer { text-align: center; padding: 48px 24px; color: #94A3B8; font-size: 14px; border-top: 1px solid #E2E8F0; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+          .hero-section { flex-direction: column; padding: 32px 24px; gap: 24px; }
+          .hero-section h1 { font-size: 32px !important; }
+          .hero-section p { font-size: 16px !important; }
+          .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
+          .kpi-value { font-size: 28px !important; }
+          .action-bar { flex-direction: column; align-items: stretch; padding: 16px 20px; }
+          .btn-primary, .btn-secondary, .btn-ghost { justify-content: center; min-height: 48px; padding: 1em 2em; font-size: 11px; }
+          .lang-switch { margin-left: 0; justify-content: center; margin-top: 8px; }
+          .charts-grid { grid-template-columns: 1fr !important; }
+          .chart-card.wide { grid-column: span 1 !important; }
+          .featured-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
+          .featured-stat-card { max-width: 100%; height: 200px; }
+          .featured-stat-value { font-size: 28px !important; }
+          header { flex-wrap: wrap; gap: 8px; padding: 12px 16px !important; }
+          header nav { gap: 12px !important; }
+          .district-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+          .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+          .featured-stat-grid { grid-template-columns: 1fr !important; }
+          .kpi-card { padding: 16px; }
+          .hero-section h1 { font-size: 24px !important; }
+        }
       `}</style>
     </>
   );
