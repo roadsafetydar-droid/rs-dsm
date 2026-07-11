@@ -20,10 +20,10 @@ export default function Home() {
           borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontWeight: 700, fontSize: "20px", letterSpacing: "-0.3px" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", color: "#fff", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontWeight: 700, fontSize: "20px", letterSpacing: "-0.3px" }}>
           <img src="/accident-protection.png" alt="" style={{ width: 30, height: 30, objectFit: "contain" }} />
           <span>Road Safety <span style={{ color: "#93C5FD" }}>Dar es Salaam</span></span>
-        </div>
+        </Link>
         <nav style={{ display: "flex", alignItems: "center", gap: "28px" }}>
           <Link href="/dashboard/" className="topbar-link">Dashboard</Link>
           <Link href="/report/" className="topbar-link">Report</Link>
@@ -171,7 +171,13 @@ export default function Home() {
               mwijaydavie@gmail.com
             </a>
           </p>
-          <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: "0.5px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 20px", marginTop: 4 }}>
+            {["Ilala", "Kinondoni", "Temeke", "Ubungo", "Kigamboni"].map((d) => (
+              <Link key={d} href={`/dashboard?district=${d.toLowerCase()}`} style={{ color: "#64748B", textDecoration: "none", fontSize: 13, fontWeight: 500 }}
+              >{d}</Link>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: "0.5px", marginTop: 8 }}>
             SDG 11.2 — Safer urban transport in Dar es Salaam · Tanzania
           </div>
           <div style={{ fontSize: 10, color: "#CBD5E1", fontFamily: "monospace", opacity: 0.5 }}>
