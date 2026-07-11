@@ -157,7 +157,20 @@ export default function DashboardPage() {
           <Link href="/dashboard" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Dashboard</Link>
           <Link href="/report" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Report</Link>
           {user ? (
-            <span style={{ color: "#fff", fontSize: 14 }}>{user.email}</span>
+            <>
+              <span style={{ color: "#fff", fontSize: 14 }}>{user.email}</span>
+              <button
+                onClick={async () => {
+                  const supabase = (await import("@/lib/supabase-browser")).createClient();
+                  await supabase.auth.signOut();
+                  localStorage.removeItem("rsd_user");
+                  window.location.href = "/login";
+                }}
+                style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "none", padding: "6px 14px", borderRadius: 6, fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+              >
+                Log Out
+              </button>
+            </>
           ) : (
             <Link href="/login" style={{ background: "#60A5FA", color: "#fff", padding: "6px 14px", borderRadius: 6, fontWeight: 700, textDecoration: "none", fontSize: 13 }}>Sign In</Link>
           )}
@@ -202,7 +215,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Map */}
-        <div ref={mapRef} style={{ height: 480, borderRadius: 16, overflow: "hidden", marginBottom: 24, border: "1px solid #E2E8F0" }} />
+        <div ref={mapRef} style={{ height: 480, borderRadius: 16, overflow: "hidden", marginBottom: 24, border: "1px solid #E2E8F0" }}>
+          {!accidents.length && (
+            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: 14 }}>
+              Loading map data...
+            </div>
+          )}
+        </div>
 
         {/* Charts */}
         {stats && (

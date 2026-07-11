@@ -13,10 +13,11 @@ export default function LoginPage() {
   const supabase = createClient();
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
+    if (error) setError(error.message);
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -33,6 +34,8 @@ export default function LoginPage() {
       setError(err.message);
     } else {
       window.location.href = "/dashboard";
+      localStorage.setItem("rsd_user", JSON.stringify({ email }));
+      return;
     }
     setLoading(false);
   };
@@ -41,7 +44,7 @@ export default function LoginPage() {
     <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: "#3B82F6", color: "#fff" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 19 }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain", filter: "brightness(10)" }} />
+          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
           Road Safety Dar es Salaam
         </div>
         <nav style={{ display: "flex", gap: 16 }}>
