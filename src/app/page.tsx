@@ -3,25 +3,28 @@ import Link from "next/link";
 export default function Home() {
   return (
     <>
-      {/* Topbar — Sky blue (#3B82F6) */}
+      {/* Topbar — Premium Glass Design */}
       <header
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "16px 24px",
-          background: "#3B82F6",
+          padding: "12px 32px",
+          background: "linear-gradient(135deg, #1E3A5F 0%, #2563EB 50%, #3B82F6 100%)",
           color: "#fff",
           position: "sticky",
           top: 0,
           zIndex: 1000,
+          boxShadow: "0 4px 20px rgba(37, 99, 235, 0.25)",
+          backdropFilter: "blur(10px)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontWeight: 700, fontSize: "19px" }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
-          Road Safety Dar es Salaam
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontWeight: 700, fontSize: "20px", letterSpacing: "-0.3px" }}>
+          <img src="/accident-protection.png" alt="" style={{ width: 30, height: 30, objectFit: "contain" }} />
+          <span>Road Safety <span style={{ color: "#93C5FD" }}>Dar es Salaam</span></span>
         </div>
-        <nav style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+        <nav style={{ display: "flex", alignItems: "center", gap: "28px" }}>
           <Link href="/dashboard/" className="topbar-link">Dashboard</Link>
           <Link href="/report/" className="topbar-link">Report</Link>
           <Link href="/login" className="btn-signin">Sign In</Link>
@@ -155,9 +158,45 @@ export default function Home() {
       </main>
 
       <footer className="site-footer">
-        <small>SDG 11.2 — Safer urban transport in Dar es Salaam · Built by Mwijay · 2026</small>
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img src="/accident-protection.png" alt="" style={{ width: 24, height: 24, objectFit: "contain", opacity: 0.6 }} />
+            <span style={{ fontWeight: 700, fontSize: 16, color: "#0F172A" }}>Road Safety Dar es Salaam</span>
+          </div>
+          <p style={{ margin: 0, color: "#64748B", fontSize: 14, lineHeight: 1.6, textAlign: "center" }}>
+            &copy; {new Date().getFullYear()} <strong>Mwijay Davie</strong> — All Rights Reserved.
+            <br />
+            Built with passion for safer roads. Contact:{" "}
+            <a href="mailto:mwijaydavie@gmail.com" style={{ color: "#3B82F6", textDecoration: "none", fontWeight: 600 }}>
+              mwijaydavie@gmail.com
+            </a>
+          </p>
+          <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: "0.5px" }}>
+            SDG 11.2 — Safer urban transport in Dar es Salaam · Tanzania
+          </div>
+          <div style={{ fontSize: 10, color: "#CBD5E1", fontFamily: "monospace", opacity: 0.5 }}>
+            {/* Inline verification hash — this site was engineered with dedication */}
+            {/* HASH: RS-DSM-2026-MWIJAY-DAVIE-VERIFIED-7g9k2m4x */}
+            {/* Proof of work: Engineered by Mwijay Davie using Next.js + Supabase + AI */}
+          </div>
+        </div>
       </footer>
 
+      {/* Console credit — visible to developers */}
+      <script dangerouslySetInnerHTML={{
+        __html: `
+        console.log("%c Road Safety Dar es Salaam %c",
+          "background:#1E3A5F;color:#fff;padding:8px 16px;border-radius:4px 0 0 4px;font-size:16px;font-weight:bold",
+          "background:#3B82F6;color:#fff;padding:8px 16px;border-radius:0 4px 4px 0;font-size:16px"
+        );
+        console.log("%c Engineered with passion by Mwijay Davie %c mwijaydavie@gmail.com %c",
+          "background:#0F172A;color:#22C55E;padding:6px 12px;border-radius:4px 0 0 4px;font-size:13px",
+          "background:#22C55E;color:#0F172A;padding:6px 12px;border-radius:0 4px 4px 0;font-size:13px"
+        );
+        console.log("HASH: RS-DSM-2026-MWIJAY-DAVIE-VERIFIED-7g9k2m4x");
+        console.log("This is a verified build by Mwijay Davie. Unauthorized reproduction is prohibited.");
+        `
+      }} />
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
@@ -166,15 +205,17 @@ export default function Home() {
         .topbar-link {
           color: #fff; text-decoration: none; font-size: 16px; font-weight: 600;
           padding: 8px 12px; border-radius: 8px; transition: background 0.24s;
+          letter-spacing: -0.2px;
         }
-        .topbar-link:hover { background: rgba(255,255,255,0.15); }
+        .topbar-link:hover { background: rgba(255,255,255,0.12); }
         .btn-signin {
-          background: #60A5FA; color: #fff; padding: 0.4rem 1rem; border-radius: 6px;
+          background: rgba(255,255,255,0.15); color: #fff; padding: 0.5rem 1.2rem; border-radius: 8px;
           font-weight: 700; text-decoration: none; font-size: 0.85rem;
-          box-shadow: 0 2px 6px rgba(59,130,246,0.3);
+          backdropFilter: blur(4px);
+          border: 1px solid rgba(255,255,255,0.2);
           transition: background 0.2s, transform 0.15s;
         }
-        .btn-signin:hover { background: #3B82F6; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
+        .btn-signin:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
         .hero-section {
           display: flex; align-items: flex-start; justify-content: space-between; gap: 48px;
           margin-bottom: 48px; padding: 48px;
@@ -281,7 +322,10 @@ export default function Home() {
         .district-card { padding: 16px; background: #F8FAFC; border-radius: 16px; border: 1px solid #E2E8F0; text-align: center; }
         .district-name { font-family: "Hubot Sans","Nunito","Quicksand",system-ui,sans-serif; font-weight: 700; font-size: 16px; color: #0F172A; }
         .district-wards { font-size: 12px; color: #475569; margin-top: 4px; }
-        .site-footer { text-align: center; padding: 48px 24px; color: #94A3B8; font-size: 14px; border-top: 1px solid #E2E8F0; }
+        .site-footer {
+          text-align: center; padding: 48px 24px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+          border-top: 1px solid #E2E8F0;
+        }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
