@@ -213,7 +213,7 @@ export default function DashboardPage() {
     <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
       <PremiumTopNav variant="dashboard" />
 
-      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px" }}>
+      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", position: "relative", zIndex: 1 }}>
         {/* Export bar — sits at the top, dominant control surface */}
         <ExportBar
           accidentCount={

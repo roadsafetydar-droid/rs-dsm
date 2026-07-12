@@ -49,6 +49,11 @@ export default function AuthCallbackPage() {
               email: j.user.email ?? data.session.user.email,
               firstName: j.user.firstName ?? (data.session.user.email?.split("@")[0] || "User"),
               lastName: j.user.lastName ?? "",
+              avatar:
+                j.user.avatar ??
+                (data.session.user.user_metadata as any)?.avatar_url ??
+                (data.session.user.user_metadata as any)?.picture ??
+                undefined,
               role: j.user.role ?? "community",
               isStaff: !!j.user.isStaff,
               isSuperuser: !!j.user.isSuperuser,

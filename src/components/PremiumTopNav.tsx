@@ -9,6 +9,7 @@ interface NavUser {
   email: string;
   firstName?: string;
   lastName?: string;
+  avatar?: string;
   role?: string;
   isStaff?: boolean;
   isSuperuser?: boolean;
@@ -284,21 +285,32 @@ export default function PremiumTopNav({
                   }}
                 >
                   <span
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: "50%",
-                      background: scrolled ? ACCENT : "rgba(255, 255, 255, 0.25)",
-                      color: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 13,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {(user.firstName?.[0] || user.email[0] || "U").toUpperCase()}
-                  </span>
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: "50%",
+                        background: scrolled ? ACCENT : "rgba(255, 255, 255, 0.25)",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        overflow: "hidden",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt=""
+                          referrerPolicy="no-referrer"
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      ) : (
+                        (user.firstName?.[0] || user.email[0] || "U").toUpperCase()
+                      )}
+                    </span>
                   <span className="rsd-nav-desktop" style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {user.isGuest ? "Guest" : user.firstName || user.email.split("@")[0]}
                   </span>

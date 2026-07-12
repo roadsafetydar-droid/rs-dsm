@@ -98,6 +98,7 @@ export default function LoginPage() {
     let profileData: any = {
       email,
       firstName: email.split("@")[0],
+      avatar: undefined,
       isStaff: false,
       isSuperuser: false,
       role: "community",
