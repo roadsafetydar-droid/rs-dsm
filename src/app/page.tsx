@@ -43,11 +43,13 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Action Bar */}
+        {/* Action Bar — secondary navigation */}
         <div className="action-bar">
-          <Link href="/report/" className="btn-primary">+ Report Accident</Link>
-          <Link href="/dashboard/" className="btn-secondary">Hotspot Map</Link>
+          <Link href="/dashboard/" className="btn-secondary">View Hotspot Map</Link>
           <Link href="/login" className="btn-ghost">Sign In</Link>
+          <span style={{ marginLeft: "auto", fontSize: 14, color: "#475569", fontWeight: 500 }}>
+            ⚡ Citizen-powered · 850+ verified reports
+          </span>
         </div>
 
         {/* Featured Stat Cards */}
@@ -68,6 +70,69 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* MID-PAGE PRIMARY CTA — Report Accident (centerpiece) */}
+        <section className="report-cta-section">
+          <div className="report-cta-left">
+            <div className="report-cta-eyebrow">
+              <span className="report-cta-dot" />
+              <span>Live Citizen Reporting</span>
+            </div>
+            <h2 className="report-cta-title">
+              Saw an accident? <br />
+              <span style={{ color: "#F87171" }}>Report it in 60 seconds.</span>
+            </h2>
+            <p className="report-cta-sub">
+              Your report helps identify hotspots, save lives, and push authorities to fix dangerous junctions.
+              Anonymous by default. Takes less than a minute.
+            </p>
+            <div className="report-cta-actions">
+              <Link href="/report/" className="btn-report-primary">
+                <span style={{ fontSize: 20, marginRight: 8 }}>＋</span> Report an Accident Now
+              </Link>
+              <Link href="/dashboard/" className="btn-report-secondary">
+                See Live Hotspots
+              </Link>
+            </div>
+            <div className="report-cta-strip">
+              <div><strong>📍 5 districts</strong> covered</div>
+              <div><strong>⚡ 60 sec</strong> average form time</div>
+              <div><strong>🔒 Anonymous</strong> by default</div>
+            </div>
+          </div>
+          <div className="report-cta-right">
+            <div className="report-cta-hotspot-header">
+              <span className="live-dot" />
+              <span>Top 5 Active Hotspots</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>Last 30 days</span>
+            </div>
+            <div className="report-cta-hotspot-list">
+              {[
+                { rank: 1, area: "Kariakoo — Bibi Titi", reports: 24, severity: "Critical", color: "#F87171" },
+                { rank: 2, area: "Ubungo Junction", reports: 19, severity: "Critical", color: "#F87171" },
+                { rank: 3, area: "Mwenge — Bagamoyo Rd", reports: 17, severity: "High", color: "#FBBF24" },
+                { rank: 4, area: "Kivukoni Front", reports: 14, severity: "High", color: "#FBBF24" },
+                { rank: 5, area: "Mbagala Roundabout", reports: 11, severity: "Medium", color: "#3B82F6" },
+              ].map((h) => (
+                <div key={h.rank} className="report-cta-hotspot-row">
+                  <div className="report-cta-hotspot-rank" style={{ background: h.color }}>{h.rank}</div>
+                  <div className="report-cta-hotspot-meta">
+                    <div className="report-cta-hotspot-name">{h.area}</div>
+                    <div className="report-cta-hotspot-stats">
+                      <span style={{ color: h.color, fontWeight: 700 }}>{h.severity}</span>
+                      <span style={{ color: "#94A3B8" }}>·</span>
+                      <span>{h.reports} reports</span>
+                    </div>
+                  </div>
+                  <Link href={`/dashboard/?area=${encodeURIComponent(h.area)}`} className="report-cta-hotspot-link">View →</Link>
+                </div>
+              ))}
+            </div>
+            <Link href="/dashboard/" className="report-cta-hotspot-foot">
+              Open full hotspot intelligence map →
+            </Link>
+          </div>
+        </section>
 
         {/* Charts Grid */}
         <div className="charts-grid">
@@ -299,6 +364,138 @@ export default function Home() {
         .district-card { padding: 16px; background: #F8FAFC; border-radius: 16px; border: 1px solid #E2E8F0; text-align: center; }
         .district-name { font-family: "Hubot Sans","Nunito","Quicksand",system-ui,sans-serif; font-weight: 700; font-size: 16px; color: #0F172A; }
         .district-wards { font-size: 12px; color: #475569; margin-top: 4px; }
+
+        /* ===== MID-PAGE REPORT ACCIDENT CTA ===== */
+        .report-cta-section {
+          display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px;
+          margin: 56px 0; padding: 0;
+        }
+        .report-cta-left {
+          background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+          color: #fff; border-radius: 24px; padding: 40px;
+          position: relative; overflow: hidden;
+          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+        }
+        .report-cta-left::before {
+          content: ""; position: absolute; top: -80px; right: -80px;
+          width: 280px; height: 280px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(248, 113, 113, 0.25) 0%, transparent 70%);
+        }
+        .report-cta-eyebrow {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: rgba(34, 197, 94, 0.12); color: #22C55E;
+          padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
+          letter-spacing: 0.05em; text-transform: uppercase;
+          border: 1px solid rgba(34, 197, 94, 0.3);
+          margin-bottom: 20px; position: relative; z-index: 1;
+        }
+        .report-cta-dot {
+          width: 8px; height: 8px; border-radius: 50%; background: #22C55E;
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        .report-cta-title {
+          font-family: "Hubot Sans","Nunito","Quicksand",system-ui,sans-serif;
+          font-size: 36px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em;
+          margin: 0 0 16px; position: relative; z-index: 1;
+        }
+        .report-cta-sub {
+          font-size: 16px; line-height: 1.6; color: #CBD5E1; margin: 0 0 28px;
+          max-width: 480px; position: relative; z-index: 1;
+        }
+        .report-cta-actions {
+          display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px;
+          position: relative; z-index: 1;
+        }
+        .btn-report-primary {
+          display: inline-flex; align-items: center; justify-content: center;
+          background: linear-gradient(135deg, #F87171 0%, #DC2626 100%);
+          color: #fff; text-decoration: none;
+          font-family: "Atkinson Hyperlegible","Inter",system-ui,sans-serif;
+          font-size: 15px; font-weight: 700;
+          padding: 16px 32px; border-radius: 14px;
+          letter-spacing: 0.01em;
+          box-shadow: 0 8px 20px rgba(220, 38, 38, 0.35);
+          transition: all 0.2s ease;
+        }
+        .btn-report-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 28px rgba(220, 38, 38, 0.5);
+        }
+        .btn-report-secondary {
+          display: inline-flex; align-items: center; justify-content: center;
+          background: rgba(255, 255, 255, 0.1); color: #fff; text-decoration: none;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          font-size: 15px; font-weight: 600;
+          padding: 16px 28px; border-radius: 14px;
+          backdrop-filter: blur(8px);
+          transition: all 0.2s ease;
+        }
+        .btn-report-secondary:hover {
+          background: rgba(255, 255, 255, 0.18);
+          transform: translateY(-1px);
+        }
+        .report-cta-strip {
+          display: flex; flex-wrap: wrap; gap: 24px; padding-top: 24px;
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          font-size: 13px; color: #94A3B8; position: relative; z-index: 1;
+        }
+        .report-cta-strip strong { color: #fff; font-weight: 700; }
+
+        .report-cta-right {
+          background: #fff; border-radius: 24px; padding: 32px;
+          border: 1px solid #E2E8F0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
+          display: flex; flex-direction: column;
+        }
+        .report-cta-hotspot-header {
+          display: flex; align-items: center; gap: 8px;
+          font-family: "Hubot Sans","Nunito",system-ui,sans-serif;
+          font-size: 14px; font-weight: 700; color: #0F172A;
+          text-transform: uppercase; letter-spacing: 0.05em;
+          margin-bottom: 20px;
+        }
+        .report-cta-hotspot-header .live-dot {
+          width: 8px; height: 8px; border-radius: 50%; background: #22C55E;
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        .report-cta-hotspot-list {
+          display: flex; flex-direction: column; gap: 10px; flex: 1;
+        }
+        .report-cta-hotspot-row {
+          display: flex; align-items: center; gap: 14px;
+          padding: 12px 14px; border-radius: 14px;
+          background: #F8FAFC; border: 1px solid #E2E8F0;
+          transition: all 0.2s ease;
+        }
+        .report-cta-hotspot-row:hover {
+          background: #F1F5F9; transform: translateX(2px);
+        }
+        .report-cta-hotspot-rank {
+          width: 32px; height: 32px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          color: #fff; font-weight: 800; font-size: 14px; flex-shrink: 0;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+        .report-cta-hotspot-meta { flex: 1; min-width: 0; }
+        .report-cta-hotspot-name {
+          font-weight: 700; font-size: 14px; color: #0F172A;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .report-cta-hotspot-stats {
+          display: flex; gap: 6px; align-items: center; font-size: 12px; margin-top: 2px;
+        }
+        .report-cta-hotspot-link {
+          color: #3B82F6; text-decoration: none; font-size: 12px; font-weight: 700;
+          white-space: nowrap;
+        }
+        .report-cta-hotspot-link:hover { color: #1D4ED8; }
+        .report-cta-hotspot-foot {
+          display: block; text-align: center; margin-top: 18px; padding: 12px;
+          background: #F1F5F9; border-radius: 12px; color: #1E293B;
+          text-decoration: none; font-weight: 700; font-size: 13px;
+          transition: background 0.2s;
+        }
+        .report-cta-hotspot-foot:hover { background: #E2E8F0; }
         .site-footer {
           text-align: center; padding: 48px 24px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
           border-top: 1px solid #E2E8F0;
@@ -321,6 +518,10 @@ export default function Home() {
           header { flex-wrap: wrap; gap: 8px; padding: 12px 16px !important; }
           header nav { gap: 12px !important; }
           .district-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .report-cta-section { grid-template-columns: 1fr !important; margin: 36px 0; }
+          .report-cta-left { padding: 28px 24px; }
+          .report-cta-title { font-size: 28px !important; }
+          .report-cta-right { padding: 24px; }
         }
         @media (max-width: 480px) {
           .kpi-grid { grid-template-columns: 1fr 1fr !important; }
