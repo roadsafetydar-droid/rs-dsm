@@ -453,9 +453,9 @@ export default function AuthorityPage() {
                                        currentRole === "editor" ? "#3B82F6" : "#475569",
                               }}
                             >
-                              <option value="community">Community</option>
-                              <option value="editor">Editor</option>
-                              <option value="admin">Admin</option>
+                              <option value="community">🚶 Community</option>
+                              <option value="editor">🚦 Traffic Police</option>
+                              <option value="admin">⭐ Admin</option>
                             </select>
                           </td>
                           <td style={{ padding: "12px 16px", textAlign: "center" }}>

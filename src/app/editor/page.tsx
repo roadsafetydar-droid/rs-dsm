@@ -52,7 +52,6 @@ export default function EditorPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [stats, setStats] = useState({ pending: 0, verified: 0, rejected: 0 });
 
-  // Load user + initial data
   useEffect(() => {
     let cancelled = false;
 
@@ -68,7 +67,6 @@ export default function EditorPage() {
       setUser(data.supabaseUser);
       setRole(data.role);
 
-      // Check permission: editor role, isStaff, isSuperuser, or hardcoded admin email
       const userEmail = data.supabaseUser?.email?.toLowerCase() ?? "";
       const isAdminEmail = userEmail === "roadsafetydar@gmail.com";
       const isStaff =
@@ -83,7 +81,6 @@ export default function EditorPage() {
         return;
       }
 
-      // Load counts
       loadStats();
     };
 
@@ -91,7 +88,6 @@ export default function EditorPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Fetch accidents when filter changes
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -122,7 +118,6 @@ export default function EditorPage() {
       const res = await fetch("/api/stats");
       if (res.ok) {
         const data = await res.json();
-        // Stats API may not have pending/verified/rejected breakdown
         setStats({
           pending: data.pending || 0,
           verified: data.verified || 0,
@@ -203,7 +198,6 @@ export default function EditorPage() {
     }
   }, []);
 
-  // Filter by search query (client-side)
   const filtered = accidents.filter((a) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -225,63 +219,37 @@ export default function EditorPage() {
 
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
         {/* Header */}
-        <div style={{
+        <div className="editor-header" style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
           marginBottom: 24, flexWrap: "wrap", gap: 12,
         }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#0F172A" }}>
-              📋 Review Queue
+              🚦 Traffic Police Queue
             </h2>
             <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: 14 }}>
               Verify, reject, or manage accident reports
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={() => { setFilter("pending"); setRefreshKey(k => k + 1); }}
-              style={{
-                padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600,
-                cursor: "pointer", border: "1px solid #E2E8F0",
-                background: filter === "pending" ? "#FBBF24" : "#fff",
-                color: filter === "pending" ? "#92400E" : "#475569",
-              }}
-            >
-              Pending {stats.pending > 0 ? `(${stats.pending})` : ""}
-            </button>
-            <button
-              onClick={() => { setFilter("verified"); setRefreshKey(k => k + 1); }}
-              style={{
-                padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600,
-                cursor: "pointer", border: "1px solid #E2E8F0",
-                background: filter === "verified" ? "#22C55E" : "#fff",
-                color: filter === "verified" ? "#fff" : "#475569",
-              }}
-            >
-              ✓ Verified
-            </button>
-            <button
-              onClick={() => { setFilter("rejected"); setRefreshKey(k => k + 1); }}
-              style={{
-                padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600,
-                cursor: "pointer", border: "1px solid #E2E8F0",
-                background: filter === "rejected" ? "#DC2626" : "#fff",
-                color: filter === "rejected" ? "#fff" : "#475569",
-              }}
-            >
-              ✗ Rejected
-            </button>
-            <button
-              onClick={() => { setFilter("all"); setRefreshKey(k => k + 1); }}
-              style={{
-                padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600,
-                cursor: "pointer", border: "1px solid #E2E8F0",
-                background: filter === "all" ? "#3B82F6" : "#fff",
-                color: filter === "all" ? "#fff" : "#475569",
-              }}
-            >
-              All
-            </button>
+          <div className="editor-filters" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[
+              { key: "pending", label: `Pending${stats.pending > 0 ? ` (${stats.pending})` : ""}`, bg: filter === "pending" ? "#FBBF24" : "#fff", color: filter === "pending" ? "#92400E" : "#475569" },
+              { key: "verified", label: "✓ Verified", bg: filter === "verified" ? "#22C55E" : "#fff", color: filter === "verified" ? "#fff" : "#475569" },
+              { key: "rejected", label: "✗ Rejected", bg: filter === "rejected" ? "#DC2626" : "#fff", color: filter === "rejected" ? "#fff" : "#475569" },
+              { key: "all", label: "All", bg: filter === "all" ? "#3B82F6" : "#fff", color: filter === "all" ? "#fff" : "#475569" },
+            ].map((btn) => (
+              <button
+                key={btn.key}
+                onClick={() => { setFilter(btn.key); setRefreshKey(k => k + 1); }}
+                style={{
+                  padding: "8px 18px", borderRadius: 999, fontSize: 13, fontWeight: 600,
+                  cursor: "pointer", border: "1px solid #E2E8F0",
+                  background: btn.bg, color: btn.color,
+                }}
+              >
+                {btn.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -300,11 +268,11 @@ export default function EditorPage() {
               fontSize: 14,
               outline: "none",
               background: "#fff",
+              boxSizing: "border-box",
             }}
           />
         </div>
 
-        {/* Error banner */}
         {error && (
           <div style={{
             padding: "12px 16px", borderRadius: 10, marginBottom: 16,
@@ -316,7 +284,6 @@ export default function EditorPage() {
           </div>
         )}
 
-        {/* Stats bar */}
         {!loading && (
           <div style={{
             display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap",
@@ -334,7 +301,6 @@ export default function EditorPage() {
           </div>
         )}
 
-        {/* Loading */}
         {loading && (
           <div style={{ textAlign: "center", padding: 60, color: "#94A3B8" }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
@@ -342,7 +308,6 @@ export default function EditorPage() {
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: 60 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>
@@ -359,7 +324,6 @@ export default function EditorPage() {
           </div>
         )}
 
-        {/* Accident cards */}
         {!loading && filtered.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {filtered.map((a) => {
@@ -369,18 +333,16 @@ export default function EditorPage() {
               const statusBg = STATUS_BG[a.verificationStatus] || "#F1F5F9";
 
               return (
-                <div key={a.id} style={{
+                <div key={a.id} className="editor-accident-card" style={{
                   background: "#fff",
                   borderRadius: 14,
                   border: `1px solid ${a.verificationStatus === "pending" ? "#FDE68A" : "#E2E8F0"}`,
                   borderLeft: `4px solid ${sevColor}`,
                   overflow: "hidden",
-                  transition: "box-shadow 0.15s",
                 }}>
-                  {/* Main row */}
-                  <div style={{ padding: 16, display: "flex", gap: 14 }}>
+                  <div className="editor-card-inner" style={{ padding: 16, display: "flex", gap: 14 }}>
                     {a.photoUrl && (
-                      <div style={{ flexShrink: 0 }}>
+                      <div className="editor-card-photo" style={{ flexShrink: 0 }}>
                         <img
                           src={a.photoUrl}
                           alt=""
@@ -394,7 +356,6 @@ export default function EditorPage() {
                     )}
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      {/* Top row: severity + status */}
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                         <span style={{
                           display: "inline-block", padding: "2px 10px", borderRadius: 999,
@@ -421,7 +382,6 @@ export default function EditorPage() {
                         )}
                       </div>
 
-                      {/* Location + time */}
                       <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 2 }}>
                         {a.junctionName || "(unnamed junction)"}
                         {a.district ? `, ${a.district}` : ""}
@@ -432,8 +392,7 @@ export default function EditorPage() {
                         {a.reportedAt && ` · reported ${new Date(a.reportedAt).toLocaleString()}`}
                       </div>
 
-                      {/* Vehicle + casualties */}
-                      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 4, fontSize: 12, color: "#475569" }}>
+                      <div className="editor-meta" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 4, fontSize: 12, color: "#475569" }}>
                         <span>🚗 {a.vehicleTypes?.join(", ") || "N/A"}</span>
                         {a.casualties > 0 && <span>🩹 {a.casualties} casualty{a.casualties !== 1 ? "ies" : ""}</span>}
                         {a.fatalities > 0 && <span style={{ color: "#DC2626", fontWeight: 600 }}>💔 {a.fatalities} fatality{a.fatalities !== 1 ? "ies" : ""}</span>}
@@ -442,7 +401,6 @@ export default function EditorPage() {
                         {a.contact && <span>📞 {a.contact}</span>}
                       </div>
 
-                      {/* Weather + road condition */}
                       {(a.weather || a.roadCondition) && (
                         <div style={{ fontSize: 11, color: "#94A3B8", marginBottom: 4 }}>
                           {a.weather && `🌤 ${a.weather}`}
@@ -451,7 +409,6 @@ export default function EditorPage() {
                         </div>
                       )}
 
-                      {/* Description (truncated or expanded) */}
                       {a.description && (
                         <div
                           style={{
@@ -471,8 +428,7 @@ export default function EditorPage() {
                         </div>
                       )}
 
-                      {/* Action buttons */}
-                      <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                      <div className="editor-actions" style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                         {a.verificationStatus === "pending" && (
                           <>
                             <button
@@ -544,10 +500,21 @@ export default function EditorPage() {
           </div>
         )}
       </main>
+
+      <style jsx>{`
+        @media (max-width: 640px) {
+          .editor-header { flex-direction: column; align-items: stretch !important; }
+          .editor-filters { justify-content: center; }
+          .editor-card-inner { flex-direction: column !important; }
+          .editor-card-photo { width: 100% !important; }
+          .editor-card-photo img { width: 100% !important; height: 160px !important; }
+          .editor-meta { gap: 6px !important; }
+          .editor-actions button { flex: 1; min-width: 80px; text-align: center; }
+        }
+      `}</style>
     </div>
   );
 
-  // Helper: re-open a verified/rejected accident back to pending
   async function handleRejectAndReopen(id: number) {
     setActionId(id);
     try {

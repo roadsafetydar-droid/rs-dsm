@@ -505,8 +505,8 @@ export default function LoginPage() {
                     onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
                     onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
                   >
-                    <option value="community">Community Member</option>
-                    <option value="editor">Traffic Officer / Editor</option>
+                    <option value="community">🚶 Community Member</option>
+                    <option value="editor">🚦 Traffic Police</option>
                   </select>
                   <span style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>
                     Your role can be changed later by an admin.
