@@ -6,32 +6,13 @@ import Link from "next/link";
 import PremiumTopNav from "@/components/PremiumTopNav";
 import { createClient } from "@/lib/supabase-browser";
 
-type Mode = "signin" | "register";
-
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("signin");
-
-  // Read query string from window.location on mount (avoids useSearchParams Suspense requirement)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("mode") === "register") setMode("register");
-  }, []);
-
-  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("community");
-
-  // UI state
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [info, setInfo] = useState("");
 
   // If user is already logged in, bounce them straight to dashboard
   useEffect(() => {
@@ -48,22 +29,7 @@ export default function LoginPage() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    setError("");
-    setInfo("");
-  }, [mode]);
-
   const supabase = createClient();
-
-  function switchTo(target: Mode) {
-    setMode(target);
-    setError("");
-    setInfo("");
-    const url = new URL(window.location.href);
-    if (target === "register") url.searchParams.set("mode", "register");
-    else url.searchParams.delete("mode");
-    window.history.replaceState({}, "", url.toString());
-  }
 
   const handleGoogleLogin = async () => {
     setError("");
@@ -119,76 +85,6 @@ export default function LoginPage() {
     router.refresh();
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords don't match.");
-      return;
-    }
-    if (!firstName.trim()) {
-      setError("First name is required.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, firstName, lastName, role: selectedRole }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.ok) {
-        setError(data.error || "Registration failed. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      // Set the Supabase session in the browser from the tokens returned by
-      // the server. This persists cookies that the middleware reads on
-      // /dashboard etc. Otherwise the route guard would redirect us back to
-      // /login even though we just registered successfully.
-      if (data.session?.accessToken && data.session?.refreshToken) {
-        try {
-          await supabase.auth.setSession({
-            access_token: data.session.accessToken,
-            refresh_token: data.session.refreshToken,
-          });
-        } catch (e) {
-          // Non-fatal: we'll still try local fallback
-        }
-      }
-
-      // Server signed us in via Supabase. Update local user record.
-      const userData = {
-        email: data.user.email,
-        firstName: data.user.firstName,
-        lastName: data.user.lastName,
-        role: data.user.role || "community",
-        isStaff: !!data.user.isStaff,
-        isSuperuser: !!data.user.isSuperuser,
-      };
-      localStorage.setItem("rsd_user", JSON.stringify(userData));
-      window.dispatchEvent(new Event("rsd:user-changed"));
-      setInfo("Account created! Redirecting…");
-      setTimeout(() => {
-        router.push("/dashboard");
-        router.refresh();
-      }, 600);
-    } catch (err: any) {
-      setError(err?.message || "Network error. Please try again.");
-      setLoading(false);
-    }
-  };
-
   const handleContinueAsGuest = () => {
     const guestUser = {
       email: `guest-${Math.random().toString(36).slice(2, 8)}@roadsafety.local`,
@@ -223,53 +119,27 @@ export default function LoginPage() {
             border: "1px solid rgba(15, 23, 42, 0.04)",
           }}
         >
-          {/* Mode toggle pill */}
-          <div
-            style={{
-              display: "flex",
-              background: "#F1F5F9",
-              borderRadius: 999,
-              padding: 4,
-              marginBottom: 24,
-            }}
-          >
-            {(["signin", "register"] as Mode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => switchTo(m)}
-                style={{
-                  flex: 1,
-                  padding: "10px 16px",
-                  border: "none",
-                  borderRadius: 999,
-                  background: mode === m ? "#fff" : "transparent",
-                  color: mode === m ? "#0F172A" : "#64748B",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  boxShadow: mode === m ? "0 1px 3px rgba(15, 23, 42, 0.08)" : "none",
-                  transition: "all 0.2s",
-                }}
-              >
-                {m === "signin" ? "Sign In" : "Register"}
-              </button>
-            ))}
+          {/* Toggle between Sign In and Register */}
+          <div style={{ display: "flex", background: "#F1F5F9", borderRadius: 999, padding: 4, marginBottom: 24 }}>
+            <div style={{
+              flex: 1, padding: "10px 16px", borderRadius: 999,
+              background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 700,
+              textAlign: "center", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
+            }}>
+              Sign In
+            </div>
+            <Link href="/register" style={{
+              flex: 1, padding: "10px 16px", textDecoration: "none", borderRadius: 999,
+              fontSize: 14, fontWeight: 700, textAlign: "center", color: "#64748B",
+            }}>
+              Register
+            </Link>
           </div>
 
           <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <img
-              src={mode === "signin" ? "/sign-in.png" : "/accident-protection.png"}
-              alt=""
-              style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 10 }}
-            />
-            <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
-              {mode === "signin" ? "Welcome Back" : "Create Your Account"}
-            </h2>
-            <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>
-              {mode === "signin"
-                ? "Sign in to Road Safety Dar es Salaam"
-                : "Join the road safety intelligence community"}
-            </p>
+            <img src="/sign-in.png" alt="" style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 10 }} />
+            <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 700, color: "#0F172A" }}>Welcome Back</h2>
+            <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>Sign in to Road Safety Dar es Salaam</p>
           </div>
 
           {error && (
@@ -290,27 +160,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {info && (
-            <div
-              role="status"
-              style={{
-                background: "#DCFCE7",
-                color: "#15803D",
-                padding: "10px 14px",
-                borderRadius: 10,
-                marginBottom: 16,
-                fontSize: 13,
-                fontWeight: 500,
-                border: "1px solid #BBF7D0",
-              }}
-            >
-              {info}
-            </div>
-          )}
-
           {/* Google */}
-          {mode === "signin" && (
-            <>
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
@@ -346,239 +196,55 @@ export default function LoginPage() {
                 <span style={{ fontSize: 12, color: "#94A3B8", fontWeight: 500 }}>OR</span>
                 <div style={{ flex: 1, height: 1, background: "#E2E8F0" }} />
               </div>
-            </>
-          )}
 
-          {/* Form */}
-          <form onSubmit={mode === "signin" ? handleEmailLogin : handleRegister}>
-            {mode === "register" && (
-              <div className="rsd-name-fields" style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>First name *</span>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    placeholder="Davie"
-                    style={{
-                      padding: "11px 14px",
-                      border: "1px solid #E2E8F0",
-                      borderRadius: 10,
-                      fontSize: 15,
-                      minHeight: 46,
-                      outline: "none",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
-                  />
-                </label>
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Last name</span>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Byanmwijage"
-                    style={{
-                      padding: "11px 14px",
-                      border: "1px solid #E2E8F0",
-                      borderRadius: 10,
-                      fontSize: 15,
-                      minHeight: 46,
-                      outline: "none",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
-                  />
-                </label>
-              </div>
-            )}
-
+          {/* Sign-in Form */}
+          <form onSubmit={handleEmailLogin}>
             <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Email *</span>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="your@email.com"
-                autoComplete="email"
-                style={{
-                  padding: "11px 14px",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: 10,
-                  fontSize: 15,
-                  minHeight: 46,
-                  outline: "none",
-                }}
+                type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                required placeholder="your@email.com" autoComplete="email"
+                style={{ padding: "11px 14px", border: "1px solid #E2E8F0", borderRadius: 10, fontSize: 15, minHeight: 46, outline: "none" }}
                 onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
                 onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
               />
             </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: mode === "register" ? 14 : 24}}>
+            <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 24 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Password *</span>
               <div style={{ position: "relative" }}>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="••••••••"
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                  style={{
-                    width: "100%",
-                    padding: "11px 44px 11px 14px",
-                    border: "1px solid #E2E8F0",
-                    borderRadius: 10,
-                    fontSize: 15,
-                    minHeight: 46,
-                    outline: "none",
-                  }}
+                  type={showPassword ? "text" : "password"} value={password}
+                  onChange={(e) => setPassword(e.target.value)} required minLength={6}
+                  placeholder="••••••••" autoComplete="current-password"
+                  style={{ width: "100%", padding: "11px 44px 11px 14px", border: "1px solid #E2E8F0", borderRadius: 10, fontSize: 15, minHeight: 46, outline: "none" }}
                   onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
                   onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
+                <button type="button" onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  style={{
-                    position: "absolute",
-                    right: 8,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    padding: 6,
-                    cursor: "pointer",
-                    color: "#64748B",
-                  }}
-                >
+                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", padding: 6, cursor: "pointer", color: "#64748B" }}>
                   {showPassword ? "🙈" : "👁️"}
                 </button>
               </div>
             </label>
 
-            {mode === "register" && (
-              <>
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Confirm password *</span>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    style={{
-                      padding: "11px 14px",
-                      border: "1px solid #E2E8F0",
-                      borderRadius: 10,
-                      fontSize: 15,
-                      minHeight: 46,
-                      outline: "none",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
-                  />
-                </label>
-
-                {/* Role selection */}
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 20 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Account type</span>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    style={{
-                      padding: "11px 14px",
-                      border: "1px solid #E2E8F0",
-                      borderRadius: 10,
-                      fontSize: 15,
-                      minHeight: 46,
-                      outline: "none",
-                      background: "#fff",
-                      cursor: "pointer",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
-                  >
-                    <option value="community">🚶 Community Member</option>
-                    <option value="editor">🚦 Traffic Police</option>
-                  </select>
-                  <span style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>
-                    Your role can be changed later by an admin.
-                  </span>
-                </label>
-              </>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%",
-                background: "#3B82F6",
-                color: "#fff",
-                border: "none",
-                padding: "13px 16px",
-                borderRadius: 999,
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.7 : 1,
-                minHeight: 48,
-                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)",
-                marginBottom: 16,
-              }}
-            >
-              {loading ? "Please wait…" : mode === "signin" ? "Sign In" : "Create Account"}
+            <button type="submit" disabled={loading} style={{
+                width: "100%", background: "#3B82F6", color: "#fff", border: "none",
+                padding: "13px 16px", borderRadius: 999, fontSize: 15, fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, minHeight: 48,
+                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)", marginBottom: 16,
+              }}>
+              {loading ? "Please wait…" : "Sign In"}
             </button>
           </form>
 
-          {/* Switch mode link */}
+          {/* Register link */}
           <div style={{ textAlign: "center", fontSize: 14, color: "#475569" }}>
-            {mode === "signin" ? (
-              <>
-                Don&apos;t have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => switchTo("register")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#3B82F6",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    padding: 0,
-                  }}
-                >
-                  Register
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => switchTo("signin")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#3B82F6",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    padding: 0,
-                  }}
-                >
-                  Sign In
-                </button>
-              </>
-            )}
+            Don&apos;t have an account?{" "}
+            <Link href="/register" style={{ color: "#3B82F6", fontWeight: 700, textDecoration: "none" }}>
+              Register
+            </Link>
           </div>
 
           {/* Divider before guest */}
