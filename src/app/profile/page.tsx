@@ -281,15 +281,11 @@ export default function ProfilePage() {
                     : { text: "⏳ Pending", color: "#92400E", bg: "#FEF3C7" };
 
                 return (
-                  <div key={a.id} style={{
-                    display: "grid",
-                    gridTemplateColumns: "auto 1fr auto",
-                    gap: 14,
+                  <div key={a.id} className="rsd-grid-auto-1fr" style={{
                     padding: 16,
                     borderRadius: 14,
                     background: "#F8FAFC",
                     border: "1px solid #E2E8F0",
-                    alignItems: "center",
                   }}>
                     <span style={{
                       width: 12, height: 12, borderRadius: "50%",

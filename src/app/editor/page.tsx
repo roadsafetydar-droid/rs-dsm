@@ -504,7 +504,8 @@ export default function EditorPage() {
       <style jsx>{`
         @media (max-width: 640px) {
           .editor-header { flex-direction: column; align-items: stretch !important; }
-          .editor-filters { justify-content: center; }
+          .editor-filters { justify-content: center; flex-wrap: wrap; }
+          .editor-filters button { flex: 1; min-width: 0; font-size: 12px !important; padding: 8px 12px !important; }
           .editor-card-inner { flex-direction: column !important; }
           .editor-card-photo { width: 100% !important; }
           .editor-card-photo img { width: 100% !important; height: 160px !important; }

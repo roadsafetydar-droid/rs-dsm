@@ -365,6 +365,12 @@ export function CustomExportModal({
           </button>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .rsd-field-row { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -383,6 +389,7 @@ const inputStyle: React.CSSProperties = {
 function FieldRow({ children }: { children: React.ReactNode }) {
   return (
     <div
+      className="rsd-field-row"
       style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}
     >
       {children}

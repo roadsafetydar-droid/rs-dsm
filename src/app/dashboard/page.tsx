@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import PremiumTopNav from "@/components/PremiumTopNav";
 import { ExportBar } from "./ExportBar";
+import { createClient } from "@/lib/supabase-browser";
 
 interface Accident {
   id: number;
@@ -429,7 +430,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Map */}
-        <div ref={mapRef} style={{ height: 480, borderRadius: 16, overflow: "hidden", marginBottom: 24, border: "1px solid #E2E8F0" }}>
+        <div ref={mapRef} className="rsd-map" style={{ borderRadius: 16, overflow: "hidden", marginBottom: 24, border: "1px solid #E2E8F0" }}>
           {!accidents.length && (
             <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: 14 }}>
               Loading map data...
@@ -503,11 +504,7 @@ export default function DashboardPage() {
                 {list.map((a) => {
                   const sevColor = sevColors[a.severity] || "#DC2626";
                   return (
-                    <div key={a.id} style={{
-                      display: "grid",
-                      gridTemplateColumns: "auto 1fr auto",
-                      alignItems: "center",
-                      gap: 12,
+                    <div key={a.id} className="rsd-grid-auto-1fr" style={{
                       padding: 12,
                       borderRadius: 12,
                       background: "#F8FAFC",
@@ -613,6 +610,13 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        <style>{`
+          @media (max-width: 768px) {
+            .rsd-grid-auto-1fr { grid-template-columns: 1fr !important; gap: 8px; }
+            .rsd-grid-auto-1fr > *:last-child { text-align: left !important; }
+          }
+        `}</style>
       </main>
     </div>
   );

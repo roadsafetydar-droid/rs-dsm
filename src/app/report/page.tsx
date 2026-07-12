@@ -166,7 +166,7 @@ export default function ReportPage() {
                   </select>
                 </label>
               </div>
-              <button type="button" onClick={getLocation} style={{ marginTop: 10, background: "none", border: "1px solid #E2E8F0", padding: "10px 18px", borderRadius: 10, cursor: "pointer", fontSize: 14, minHeight: 44 }}>
+              <button type="button" onClick={getLocation} className="rsd-location-btn" style={{ marginTop: 10, background: "none", border: "1px solid #E2E8F0", padding: "10px 18px", borderRadius: 10, cursor: "pointer", fontSize: 14, minHeight: 44 }}>
                 📍 Use my current location
               </button>
             </div>
@@ -317,6 +317,7 @@ export default function ReportPage() {
         @media (max-width: 640px) {
           .rsd-grid-2 { grid-template-columns: 1fr !important; }
           .rsd-full-mobile { grid-column: span 1 !important; }
+          .rsd-location-btn { width: 100% !important; justify-content: center; }
         }
       `}</style>
     </div>

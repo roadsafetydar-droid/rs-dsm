@@ -83,6 +83,7 @@ export function ExportBar({
 
   return (
     <div
+      className="rsd-export-bar"
       style={{
         display: "flex",
         alignItems: "center",
@@ -119,7 +120,7 @@ export function ExportBar({
         </span>
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div className="rsd-export-spacer" style={{ flex: 1 }} />
 
       {notice && (
         <span
@@ -179,6 +180,14 @@ export function ExportBar({
           loading={loading === "pdf-custom" || loading === "xlsx-custom" ? loading : null}
         />
       )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .rsd-export-bar { flex-wrap: wrap; gap: 8px !important; }
+          .rsd-export-bar button { flex: 1; min-width: 0; text-align: center; padding: 8px 10px !important; font-size: 12px !important; }
+          .rsd-export-spacer { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

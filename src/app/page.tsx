@@ -508,13 +508,18 @@ export default function Home() {
           .hero-section p { font-size: 16px !important; }
           .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
           .kpi-value { font-size: 28px !important; }
+          .kpi-card { padding: 18px; }
           .action-bar { flex-direction: column; align-items: stretch; padding: 16px 20px; }
-          .btn-primary, .btn-secondary, .btn-ghost { justify-content: center; min-height: 48px; padding: 1em 2em; font-size: 11px; }
+          .action-bar .btn-secondary, .action-bar .btn-ghost { justify-content: center; min-height: 48px; padding: 0.8em 1.5em; font-size: 11px; width: 100%; }
+          .action-bar span { margin-left: 0 !important; text-align: center; }
           .charts-grid { grid-template-columns: 1fr !important; }
           .chart-card.wide { grid-column: span 1 !important; }
           .featured-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
           .featured-stat-card { max-width: 100%; height: 200px; }
+          .featured-stat-card img { width: 32px !important; height: 32px !important; }
           .featured-stat-value { font-size: 28px !important; }
+          .featured-stat-label { font-size: 15px !important; }
+          .featured-stat-sublabel { font-size: 12px !important; }
           header { flex-wrap: wrap; gap: 8px; padding: 12px 16px !important; }
           header nav { gap: 12px !important; }
           .district-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -522,12 +527,29 @@ export default function Home() {
           .report-cta-left { padding: 28px 24px; }
           .report-cta-title { font-size: 28px !important; }
           .report-cta-right { padding: 24px; }
+          .hero-section img { width: 80px !important; height: 80px !important; }
         }
         @media (max-width: 480px) {
-          .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+          .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+          .kpi-card { padding: 12px; }
+          .kpi-value { font-size: 22px !important; }
+          .kpi-label { font-size: 13px !important; }
           .featured-stat-grid { grid-template-columns: 1fr !important; }
-          .kpi-card { padding: 16px; }
+          .featured-stat-card { height: 180px; }
+          .featured-stat-value { font-size: 24px !important; }
           .hero-section h1 { font-size: 24px !important; }
+          .hero-section { padding: 24px 16px !important; }
+          .hero-section img { width: 64px !important; height: 64px !important; }
+          .action-bar { padding: 12px 16px !important; }
+          .report-cta-left { padding: 24px 16px !important; }
+          .report-cta-actions { flex-direction: column; }
+          .report-cta-actions a { width: 100%; justify-content: center; }
+          .report-cta-strip { flex-direction: column; gap: 8px; }
+          .report-cta-title { font-size: 22px !important; }
+          .report-cta-sub { font-size: 14px !important; }
+          .district-grid { grid-template-columns: 1fr !important; }
+          .site-footer { padding: 32px 16px !important; }
+          .live-badge { font-size: 12px !important; padding: 6px 12px !important; }
         }
       `}</style>
     </>

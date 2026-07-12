@@ -352,7 +352,7 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={mode === "signin" ? handleEmailLogin : handleRegister}>
             {mode === "register" && (
-              <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+              <div className="rsd-name-fields" style={{ display: "flex", gap: 10, marginBottom: 14 }}>
                 <label style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>First name *</span>
                   <input
@@ -648,6 +648,12 @@ export default function LoginPage() {
           </div>
         </div>
       </footer>
+
+      <style>{`
+        @media (max-width: 480px) {
+          .rsd-name-fields { flex-direction: column !important; }
+        }
+      `}</style>
     </div>
   );
 }

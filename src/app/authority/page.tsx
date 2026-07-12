@@ -181,7 +181,7 @@ export default function AuthorityPage() {
         </div>
 
         {/* Tab bar */}
-        <div style={{
+        <div className="rsd-auth-tabs" style={{
           display: "flex", gap: 4, marginBottom: 24,
           background: "#F1F5F9", borderRadius: 12, padding: 4,
         }}>
@@ -532,6 +532,16 @@ export default function AuthorityPage() {
           </div>
         )}
       </main>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .rsd-auth-tabs { flex-direction: column !important; }
+          .rsd-auth-tabs button { font-size: 13px !important; padding: 10px 16px !important; }
+          main { padding: 16px 12px !important; }
+          .rsd-auth-tabs + div table { font-size: 12px !important; }
+          .rsd-auth-tabs + div th, .rsd-auth-tabs + div td { padding: 8px 10px !important; }
+        }
+      `}</style>
     </div>
   );
 }

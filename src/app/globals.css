@@ -23,6 +23,26 @@
 
 * { box-sizing: border-box; }
 
+/* Responsive map utility */
+.rsd-map { height: 480px; }
+@media (max-width: 768px) {
+  .rsd-map { height: 300px !important; }
+}
+@media (max-width: 480px) {
+  .rsd-map { height: 260px !important; }
+}
+
+/* Stack auto/1fr/auto grids on mobile */
+.rsd-grid-auto-1fr { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+@media (max-width: 640px) {
+  .rsd-grid-auto-1fr { grid-template-columns: 1fr !important; gap: 8px; }
+  .rsd-grid-auto-1fr > *:last-child { text-align: left !important; }
+}
+
+/* Prevent horizontal overflow on any container */
+img, svg, video { max-width: 100%; height: auto; }
+.rsd-overflow-wrap { overflow-wrap: break-word; word-wrap: break-word; hyphens: auto; }
+
 body {
   margin: 0;
   font-family: "Atkinson Hyperlegible", "Nunito Sans", "Inter", system-ui, sans-serif;
