@@ -78,7 +78,7 @@ export default function Home() {
               <span className="report-cta-dot" />
               <span>Live Citizen Reporting</span>
             </div>
-            <h2 className="report-cta-title">
+            <h2 className="report-cta-title" style={{ color: "#FFFFFF" }}>
               Saw an accident? <br />
               <span style={{ color: "#F87171" }}>Report it in 60 seconds.</span>
             </h2>

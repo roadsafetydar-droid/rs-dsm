@@ -26,6 +26,7 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("community");
 
   // UI state
   const [error, setError] = useState("");
@@ -141,7 +142,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, firstName, lastName }),
+        body: JSON.stringify({ email, password, firstName, lastName, role: selectedRole }),
       });
       const data = await res.json();
 
@@ -461,28 +462,57 @@ export default function LoginPage() {
             </label>
 
             {mode === "register" && (
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 20 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Confirm password *</span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  style={{
-                    padding: "11px 14px",
-                    border: "1px solid #E2E8F0",
-                    borderRadius: 10,
-                    fontSize: 15,
-                    minHeight: 46,
-                    outline: "none",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
-                />
-              </label>
+              <>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Confirm password *</span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    style={{
+                      padding: "11px 14px",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: 10,
+                      fontSize: 15,
+                      minHeight: 46,
+                      outline: "none",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
+                    onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
+                  />
+                </label>
+
+                {/* Role selection */}
+                <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 20 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Account type</span>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    style={{
+                      padding: "11px 14px",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: 10,
+                      fontSize: 15,
+                      minHeight: 46,
+                      outline: "none",
+                      background: "#fff",
+                      cursor: "pointer",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#3B82F6")}
+                    onBlur={(e) => (e.target.style.borderColor = "#E2E8F0")}
+                  >
+                    <option value="community">Community Member</option>
+                    <option value="editor">Traffic Officer / Editor</option>
+                  </select>
+                  <span style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>
+                    Your role can be changed later by an admin.
+                  </span>
+                </label>
+              </>
             )}
 
             <button
