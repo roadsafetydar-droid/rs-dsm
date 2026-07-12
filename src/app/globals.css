@@ -43,3 +43,38 @@ h1, h2, h3, h4 {
 h1 { font-size: 40px; font-weight: 700; line-height: 1.2; }
 h2 { font-size: 32px; font-weight: 700; line-height: 1.25; }
 h3 { font-size: 24px; font-weight: 600; line-height: 1.3; }
+
+/* ===== GLOBAL MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  body { font-size: 16px; }
+  h1 { font-size: 28px !important; }
+  h2 { font-size: 22px !important; }
+  h3 { font-size: 18px !important; }
+  
+  /* Make all main containers use full width with smaller padding */
+  main { padding: 16px !important; }
+  
+  /* Make all cards stack vertically on mobile */
+  .rsd-card-row { flex-direction: column !important; }
+  .rsd-card-row > * { width: 100% !important; }
+  
+  /* Make tables scroll horizontally */
+  .rsd-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  
+  /* Make buttons full-width on mobile */
+  .rsd-btn-full-mobile { width: 100% !important; justify-content: center !important; }
+  
+  /* Reduce grid columns on mobile */
+  .rsd-grid-2 { grid-template-columns: 1fr !important; }
+  .rsd-grid-3 { grid-template-columns: 1fr !important; }
+  .rsd-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  
+  /* Better touch targets */
+  button, a, select, input { min-height: 44px; }
+  input, select { font-size: 16px !important; } /* Prevents iOS zoom */
+}
+
+@media (max-width: 480px) {
+  .rsd-grid-4 { grid-template-columns: 1fr 1fr !important; }
+  .rsd-hide-mobile { display: none !important; }
+}

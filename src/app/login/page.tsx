@@ -211,12 +211,12 @@ export default function LoginPage() {
     <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", flexDirection: "column" }}>
       <PremiumTopNav variant="login" />
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 16px 16px", flex: 1 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 12px 16px", flex: 1 }}>
         <div
           style={{
             background: "#fff",
-            padding: "clamp(24px, 4vw, 40px)",
-            borderRadius: 24,
+            padding: "clamp(20px, 4vw, 40px)",
+            borderRadius: 20,
             maxWidth: 440,
             width: "100%",
             boxShadow: "0 4px 20px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)",
