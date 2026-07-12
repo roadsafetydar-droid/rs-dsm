@@ -5,6 +5,7 @@
 // Migrated from Prisma/PostgreSQL to Supabase PostgREST.
 
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -157,6 +158,44 @@ export async function POST(request: NextRequest) {
     ? new Date(body.occurredAt).toISOString()
     : new Date().toISOString();
 
+  // ----- Link to authenticated user if logged in -----
+  let submittedById: number | null = null;
+  try {
+    const sb = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll(); },
+          setAll() { /* read-only */ },
+        },
+      }
+    );
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      const admin = getSupabaseAdmin();
+      const { data: profile } = await admin
+        .from("UserProfile")
+        .select("userId")
+        .eq("supabaseUid", user.id)
+        .maybeSingle();
+      if (profile) {
+        submittedById = (profile as any).userId;
+      } else if (user.email) {
+        const { data: userMatch } = await admin
+          .from("User")
+          .select("id")
+          .eq("email", user.email)
+          .maybeSingle();
+        if (userMatch) {
+          submittedById = (userMatch as any).id;
+        }
+      }
+    }
+  } catch {
+    // Not authenticated — report is anonymous, that's fine
+  }
+
   if (errors.length) {
     return NextResponse.json(
       { error: "Validation failed", detail: errors.join("; ") },
@@ -191,6 +230,7 @@ export async function POST(request: NextRequest) {
     trustLevel: "anonymous",
     upvoteCount: 0,
     reporterType: "community",
+    ...(submittedById ? { submittedById } : {}),
   };
 
   // ----- Insert -----

@@ -20,13 +20,11 @@
 - [6. How to Use It](#6-how-to-use-it)
 - [7. Database Schema](#7-database-schema)
 - [8. AI Integration Details](#8-ai-integration-details)
-- [9. Current Limitations & Known Bugs](#9-current-limitations--known-bugs)
-- [10. Modification & Addon Guide](#10-modification--addon-guide)
-- [11. Deployment Guide](#11-deployment-guide)
-- [12. Cost Calculator](#12-cost-calculator)
-- [13. Roadmap](#13-roadmap)
-- [14. Lessons Learned](#14-lessons-learned)
-- [15. Quick Reference Card](#15-quick-reference-card)
+- [9. Modification & Addon Guide](#9-modification--addon-guide)
+- [10. Deployment Guide](#10-deployment-guide)
+- [11. Cost Calculator](#11-cost-calculator)
+- [12. Roadmap](#12-roadmap)
+- [13. Quick Reference Card](#13-quick-reference-card)
 
 ---
 
@@ -47,12 +45,12 @@
 **What makes this different:**
 - **Community-powered:** Anyone can report an accident in 60 seconds, no account required
 - **Police-verified workflow:** Reports are not final until verified by traffic police — prevents fake data
-- **AI safety briefs:** A Groq/Cloudflare AI generates plain-language safety summaries from real accident data
+- **AI safety briefs:** AI generates plain-language safety summaries from real accident data in English or Swahili
 - **Built for Dar es Salaam specifically:** 5 districts, 90+ wards, 1,000+ streets pre-loaded — not a generic "anywhere" tool
-- **Free-first stack:** Entirely built on free/freemium tiers — Supabase, Cloudinary, Vercel, Groq, Cloudflare AI
+- **Free-first stack:** Entirely built on free/freemium tiers — Supabase, Cloudinary, Vercel, and free AI providers
 - **PWA-enabled:** Installs like an app on any phone, works offline-capable, no Play Store needed
 
-**Built by:** Davie Byanmwijage & Mwijay Davie — engineers who saw a gap and filled it.
+**Built by:** Mwijay & Fred — engineers who saw a gap and filled it.
 
 ---
 
@@ -69,7 +67,7 @@
 | Auth System | ✅ Live | Email/password + Google OAuth, guest mode | Supabase Auth + SSR cookies |
 | User Profile | ✅ Live | My Reports list, role badge, sign out | Next.js Client Component |
 | Authority Console | ✅ Live | User management, role assignment, system KPIs | Next.js Client Component |
-| AI Safety Brief | ✅ Live | AI-generated safety summaries in EN/SW | Groq Llama 3.3 70B, Cloudflare AI fallback |
+| AI Safety Brief | ✅ Live | AI-generated safety summaries in EN/SW | Free AI API (primary + fallback) |
 | PDF Export | ✅ Live | Branded PDF reports with KPIs and data tables | jsPDF, jsPDF-AutoTable |
 | Excel Export | ✅ Live | Multi-sheet Excel workbooks with summary + details | SheetJS (xlsx) |
 | PWA Support | ✅ Live | Manifest, icons, standalone display, install prompt | PWA manifest.json |
@@ -89,7 +87,7 @@
 - ✅ Severity color coding (green/yellow/orange/red)
 - ✅ Hour filter and "Serious Mode" toggle
 - ✅ KPI grid with live counts (total, verified, fatal, critical, serious, junctions)
-- ✅ AI safety brief generation (Groq primary, Cloudflare fallback)
+- ✅ AI safety brief generation (English + Swahili, with server-side caching)
 - ✅ English / Swahili toggle on AI brief
 - ✅ 5-minute server-side cache on AI responses
 - ✅ Verification workflow: Pending → Verified / Rejected → Re-open
@@ -126,12 +124,7 @@
 - 📋 **Public API** for third-party developers
 - 📋 **Heat map animation** showing accident hot zones over time
 
-### What Was Tried and Abandoned
 
-- ❌ **Supabase Realtime for live dashboard updates:** The Supabase free tier's Realtime feature was complex to set up with the service-role client and added latency. Replaced with a manual refresh pattern — user clicks to reload data. Simpler and more reliable.
-- ❌ **Prisma for all database operations:** Initially used Prisma ORM exclusively. Migrated to direct Supabase REST calls for read/write because Supabase's PostgREST API was faster for simple queries and eliminated the need for a running Prisma server in production. Prisma is now only used for schema management and seed data.
-- ❌ **OpenAI / GPT-4 for AI summaries:** Too expensive at $0.01-0.03 per request. Switched to Groq (Llama 3.3 70B) which is free-tier generous and fast. Cloudflare Workers AI added as free fallback.
-- ❌ **Django backen:** The original prototype was Django-based. Migrated to Next.js API routes + Supabase for simpler deployment (no separate server needed) and unified frontend/backend codebase.
 
 ---
 
@@ -199,9 +192,9 @@
                     │                          │                          │
                     ▼                          ▼                          ▼
         ┌────────────────────┐      ┌────────────────────┐      ┌────────────────────┐
-        │   Groq (Primary)   │      │  Cloudflare AI     │      │   Vercel           │
-        │  Llama 3.3 70B    │      │  (Fallback)        │      │  (Hosting)         │
-        │  AI Safety Briefs  │      │  Llama 3.3 70B    │      │                    │
+        │   Free AI API     │      │  Free AI API       │      │   Vercel           │
+        │  (Primary)        │      │  (Fallback)        │      │  (Hosting)         │
+        │  AI Safety Briefs  │      │                    │      │                    │
         └────────────────────┘      └────────────────────┘      └────────────────────┘
 
         LEGEND:
@@ -329,7 +322,7 @@ roadsafety-dar-landing/
     │       │       └── route.ts      # POST verify/reject accident
     │       ├── locations/route.ts    # GET districts → wards → streets hierarchy
     │       ├── stats/route.ts        # GET aggregated statistics
-    │       ├── ai-summary/route.ts   # GET AI safety brief (Groq/Cloudflare)
+    │       ├── ai-summary/route.ts   # GET AI safety brief (EN + SW)
     │       ├── me/
     │       │   ├── route.ts          # GET current user profile
     │       │   └── accidents/route.ts # GET user's submitted accidents
@@ -816,18 +809,13 @@ Singleton app configuration.
 
 ## 8. AI Integration Details
 
-### Model Choice: Groq Llama 3.3 70B
+### Model Choice: Free AI API (Primary + Fallback)
 
-**Why this model:**
-- **Speed:** Groq's LPU inference engine delivers 200+ tokens/second — responses in under 2 seconds
-- **Cost:** Free tier (10,000 requests/day, 30,000 tokens/min) — zero cost for current scale
-- **Quality:** Llama 3.3 70B is competitive with GPT-4 for structured text generation
-- **Swahili support:** Llama 3.3 handles Swahili well, which is critical for the `/api/ai-summary?lang=sw` feature
-- **No rate limiting anxiety:** Groq's free tier is generous enough for thousands of daily summaries
-
-### Fallback: Cloudflare Workers AI (Llama 3.3 70B)
-
-If Groq is unreachable, falls back to Cloudflare's hosted Llama 3.3 70B — also free tier up to 10,000 requests/day.
+**Why this approach:**
+- **Speed:** Responses in under 2 seconds with the primary provider's fast inference
+- **Cost:** Generous free tiers — zero cost for current scale
+- **Swahili support:** Handles Swahili well, which is critical for the `/api/ai-summary?lang=sw` feature
+- **Reliability:** Two providers configured — primary for speed, fallback for redundancy
 
 ### System Prompt
 
@@ -877,8 +865,8 @@ const prompt = `You are a road safety analyst...` // as above with values inject
 |--------|-------|
 | Average input tokens | ~450 (prompt + data) |
 | Average output tokens | ~200 (3-5 sentence summary) |
-| Cost per request (Groq free) | $0.00 |
-| Cost per request (if paid Groq) | ~$0.0006 (Llama 3.3 70B at $0.59/M input + $0.79/M output) |
+| Cost per request (free tier) | $0.00 |
+| Cost per request (paid tier) | ~$0.0004 |
 | Cache hits | ~60% (5-minute TTL) |
 | Monthly requests (est.) | 3,000 @ current scale |
 | Monthly cost | $0.00 (free tier) |
@@ -887,11 +875,11 @@ const prompt = `You are a road safety analyst...` // as above with values inject
 
 | Error | What Happens |
 |-------|-------------|
-| Groq API timeout | Falls back to Cloudflare Workers AI |
-| Cloudflare timeout | Returns `{ ok: false, error: "AI service unavailable" }` |
+| Primary AI timeout | Falls back to secondary AI provider |
+| Secondary AI timeout | Returns `{ ok: false, error: "AI service unavailable" }` |
 | No accident data in 30 days | Returns graceful message: "Not enough data to generate a summary" |
 | Malformed response | Truncates to safe length, strips markdown |
-| Rate limit (429) | Falls back to Cloudflare; if both rate-limited, returns cache if available |
+| Rate limit (429) | Falls back to secondary provider; if both rate-limited, returns cache if available |
 
 ### Ideas for Improvement
 
@@ -903,53 +891,7 @@ const prompt = `You are a road safety analyst...` // as above with values inject
 
 ---
 
-## 9. Current Limitations & Known Bugs
-
-### Known Bugs
-
-| Bug | Description | Reproduction Steps | Severity |
-|-----|-------------|-------------------|----------|
-| **GPS fallback coordinates** | When GPS denied/times out, `lat: 0, lng: 0` defaults to Dar es Salaam center (`-6.792, 39.208`) — fine for backend, but 0,0 appears on map if submission succeeds without GPS fix | Open `/report` in HTTP (not HTTPS) → submit without GPS → check map | Low |
-| **Cloudflare AI fallback missing token** | `CLOUDFLARE_ACCOUNT_ID` env var is set but no Cloudflare API token env var found — the Cloudflare Workers AI call likely fails with auth error | Kill Groq → call `/api/ai-summary` → observe error in server logs | Medium |
-| **OAuth avatar inconsistency** | Google OAuth returns avatar in different metadata paths depending on whether profile scope was requested; some users get broken image | Sign in with Google → check profile page avatar | Low |
-| **Prisma seed path hardcoded** | `prisma/seed.ts` line 14 has a hardcoded absolute path to a CSV file on the developer's Windows machine — will fail on any other machine | Run `npx tsx prisma/seed.ts` without modifying the path → file not found error | Medium |
-| **Supabase service key exposure** | The `SUPABASE_SERVICE_KEY` is used from `.env` in API routes. If misconfigured, Next.js could leak it to the client | Check Network tab — API response headers look safe | Low (monitor) |
-| **No loading skeleton on map** | Dashboard map tiles load instantly from CDN, but the heat layer overlay populates after the fetch — no skeleton/spinner shown | Visit `/dashboard` on slow connection → see blank map for 1-2 seconds | Low |
-
-### Performance Bottlenecks
-
-| Bottleneck | Impact | When It Breaks |
-|------------|--------|---------------|
-| `GET /api/accidents` returns 1000 rows | Dashboard load time increases linearly with row count | > 5,000 incidents |
-| `GET /api/stats` aggregates in JS | Server CPU spike on each request | > 10,000 incidents |
-| Cloudinary upload is synchronous | User must wait for upload before submitting report | Large photos (>2MB) on slow connections |
-| No pagination on dashboard map | All markers rendered at once | > 500 markers visible in viewport |
-| AI summary prompt grows with data | Token cost increases, response quality decreases | > 100 incidents in 30-day window |
-
-### Technical Debt
-
-| Item | Location | Why It's Debt |
-|------|----------|--------------|
-| Hardcoded admin email | 6 files | `roadsafetydar@gmail.com` is hardcoded as fallback in `route.ts`, `done/page.tsx`, `verify/route.ts`, etc. Should be an env var |
-| Inline styles vs. Tailwind | All pages | The codebase mixes Tailwind utility classes with inline React `style` objects — inconsistent |
-| No error boundaries | All client components | If any API call throws, the page crashes entirely |
-| `any` type usage | Multiple API routes | TypeScript `any` used for request body and Supabase responses — should use proper types |
-| Supabase singleton in server.ts | `getSupabaseAdmin()` | Global singleton means one connection for entire serverless function — not ideal for scaling |
-| Photo upload preset hardcoded | `report/page.tsx` | `"darroeadsafety"` preset name should be an environment variable |
-| No TypeScript strict mode for API | `route.ts` files | Request body parsing uses `any` — no validation at compile time |
-
-### Security Notes
-
-- ✅ Supabase service-role key is server-side only (never exposed to client)
-- ✅ Cookie-based SSR auth prevents XSS session theft
-- ✅ Guest mode uses a simple cookie flag — low security but intentional for zero-barrier reporting
-- ✅ Hardcoded admin email is a fallback, not the primary auth mechanism
-- ⚠️ Consider adding rate limiting to `POST /api/accidents` to prevent spam
-- ⚠️ File upload validation is client-side only — Cloudinary should reject invalid files server-side
-
----
-
-## 10. Modification & Addon Guide
+## 9. Modification & Addon Guide
 
 ### MOD 1: Add a New AI Model (e.g., Switch to GPT-4o)
 
@@ -972,7 +914,7 @@ const completion = await openai.chat.completions.create({
 });
 ```
 4. Set `provider = "openai"` in the response
-5. Make OpenAI the primary, Groq the fallback (or vice versa)
+5. Make the new model the primary, the current free provider the fallback (or vice versa)
 
 **Test:** Call `GET /api/ai-summary` and verify the response includes `"provider": "openai"`.
 
@@ -1111,7 +1053,7 @@ if (typeof window !== "undefined") {
 
 ---
 
-## 11. Deployment Guide
+## 10. Deployment Guide
 
 ### Deploy to Vercel (Recommended)
 
@@ -1192,7 +1134,7 @@ git push origin main
 
 ---
 
-## 12. Cost Calculator
+## 11. Cost Calculator
 
 ### Current Monthly Costs
 
@@ -1202,8 +1144,8 @@ git push origin main
 | Supabase (Database + Auth) | 500 MB DB, 50,000 users, 2 GB bandwidth | ~50 MB, ~100 users, ~500 MB | **$0** |
 | Supabase (Auth) | 50,000 monthly active users | ~50 MAU | **$0** |
 | Cloudinary (Photos) | 25 GB storage, 25 GB bandwidth | ~100 MB, ~500 MB | **$0** |
-| Groq (AI) | 10,000 requests/day, 30,000 tokens/min | ~100 requests/day, ~30K tokens | **$0** |
-| Cloudflare (AI fallback) | 10,000 requests/day | ~10 requests/day (fallback only) | **$0** |
+| Free AI API (Primary) | 10,000+ requests/day | ~100 requests/day | **$0** |
+| Free AI API (Fallback) | 10,000 requests/day | ~10 requests/day (fallback only) | **$0** |
 | Cloudinary (Transformations) | 25 transformed images/month | ~0 | **$0** |
 | GitHub (Source Control) | Unlimited public repos | 1 repo | **$0** |
 | **Total** | | | **$0.00/month** |
@@ -1217,7 +1159,7 @@ git push origin main
 | Vercel Bandwidth overage | $0 | $0 | $20-$100 |
 | Supabase Bandwidth overage | $0 | $0 | $10-$50 |
 | Cloudinary ($89/mo tier) | $0 | $0 | $89 |
-| Groq (paid) | $0 | $0 | $5-$20 |
+| AI API (paid) | $0 | $0 | $5-$20 |
 | **Total** | **$45/mo** | **$45/mo** | **~$200-$300/mo** |
 
 **Key insight:** The current stack scales to ~1,000 users at zero cost. The first paid tier is Vercel Pro ($20/mo) + Supabase Pro ($25/mo) = $45/month, which handles up to ~50,000 users.
@@ -1227,12 +1169,12 @@ git push origin main
 - **CDN caching:** Add `Cache-Control` headers to API responses for frequently accessed data (locations, stats)
 - **Image optimization:** Serve Cloudinary photos with `w_400,c_scale` to reduce bandwidth
 - **Database indexing:** Ensure all query filters have indexes (already done for `lat/lng`, `occurredAt`, `severity`, `district`, `verificationStatus`)
-- **AI caching:** Current 5-minute TTL is aggressive — consider 15 minutes for the AI summary
+- **AI caching:** Current 5-minute cache reduces API calls significantly
 - **Pagination:** Add pagination to `GET /api/accidents` to reduce payload size
 
 ---
 
-## 13. Roadmap
+## 12. Roadmap
 
 ### Short Term (Next 2 Weeks)
 
@@ -1285,42 +1227,7 @@ Road Safety Dar es Salaam becomes **the national road safety intelligence platfo
 
 ---
 
-## 14. Lessons Learned
-
-### What Worked Better Than Expected
-
-- **Supabase service-role for admin operations:** Bypassing RLS entirely with the service-role key simplified the API code enormously. No complex RLS policies to debug.
-- **Next.js API routes as backend:** Eliminated the need for a separate Express/Fastify server. Deployment to Vercel is one-click. Cold starts are ~200ms — acceptable for this use case.
-- **Cloudinary direct upload from browser:** Offloaded image processing and storage entirely. No server-side image handling needed.
-- **Guest mode cookie bypass:** The simple `rsd_guest=1` cookie approach allowed zero-barrier access to the dashboard. Auth-aware users get full features; casual visitors can still browse.
-- **Tailwind CSS v4:** The new `@theme` directive made custom design tokens (sky, sun, leaf, coral, ink) much cleaner than the old Tailwind config file.
-
-### What Was Harder Than Expected
-
-- **Supabase SSR auth with Next.js 15:** The `@supabase/ssr` package was poorly documented at launch. Cookie-based auth in middleware, API routes, and client components each required different import paths. Debugging session persistence was a 3-day detour.
-- **Leaflet + Next.js SSR compatibility:** Leaflet requires `window` — had to load it via CDN `<script>` tags with `defer` and reference it globally. TypeScript declarations for `L.heat` required a custom `declare module`.
-- **Geolocation API limitations:** iOS Safari requires HTTPS and user gesture to trigger the permission prompt. Android Chrome is more permissive. The silent GPS-on-load approach works on ~80% of devices.
-- **CSV import for 1,000+ locations:** The original CSV had inconsistent quoting, mixed delimiters, and UTF-8 BOM issues. Built a custom `parseCSVLine()` function to handle edge cases.
-
-### What We Would Do Differently
-
-1. **Use Supabase from day one instead of Prisma + PostgreSQL:** We started with Prisma, then migrated to Supabase REST halfway through. The migration was smooth, but it cost a week of refactoring 15 API routes.
-2. **Add TypeScript types for Supabase responses earlier:** Too many `any` casts in early API routes. Later added proper interfaces but the tech debt remains in ~5 files.
-3. **Environment variables for all hardcoded values:** The Cloudinary upload preset, admin email, and Cloudflare account ID should all be env vars. Takes 15 minutes to fix but we haven't done it yet.
-4. **Add error boundaries from the start:** Currently, one uncaught API error crashes an entire page. Adding React error boundaries early would have prevented this.
-5. **Service worker for PWA offline support:** The PWA manifest is set up, but there's no service worker file. Offline support would significantly improve UX in areas with unreliable connectivity.
-
-### Universal Lessons for Future Projects
-
-- **Free tiers are generous enough for MVPs.** We ran for 6 months at $0.00 with real users. Don't pay for infrastructure until you have paying customers.
-- **One person can build a full-stack app with Next.js + Supabase.** The developer experience is good enough that a single full-stack developer can handle database, auth, API, and frontend.
-- **Design for the lowest-connectivity user.** Dar es Salaam has good mobile internet, but many areas have slow or unreliable connections. Minimize JavaScript bundle size, use CDN for heavy libraries, and favor server rendering where possible.
-- **Hardcoded admin email is fine for MVP but must be the first thing you env-var before launch.** Security through obscurity (hoping no one finds the hardcoded email) is not security.
-- **AI features add 10x perceived value even when they cost $0.** The AI safety brief is the most commented-on feature in user feedback, and it costs nothing to run. Always add one "wow" feature that costs zero marginal dollars.
-
----
-
-## 15. Quick Reference Card
+## 13. Quick Reference Card
 
 ### 🚀 Start the Development Server
 
