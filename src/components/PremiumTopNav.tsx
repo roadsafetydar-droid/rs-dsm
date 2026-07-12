@@ -171,12 +171,8 @@ export default function PremiumTopNav({
     return pathname?.startsWith(href);
   };
 
-  // Brand styling per variant
-  const brandGradient = variant === "login"
-    ? `linear-gradient(135deg, #1E3A5F 0%, ${ACCENT} 100%)`
-    : variant === "authority"
-    ? "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)"
-    : BRAND_GRADIENT;
+  // Brand styling per variant — all use the same gradient for consistency
+  const brandGradient = BRAND_GRADIENT;
 
   // Compact mode: when scrolled, switch to a "floating pill" feel
   const navStyle: React.CSSProperties = {
