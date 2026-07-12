@@ -385,6 +385,21 @@ export default function PremiumTopNav({
                         </div>
                       )}
                     </div>
+                    <Link
+                      href="/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      style={{
+                        display: "block",
+                        padding: "10px 16px",
+                        color: "#0F172A",
+                        textDecoration: "none",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        borderBottom: "1px solid #F1F5F9",
+                      }}
+                    >
+                      👤 My Profile
+                    </Link>
                     {user.isStaff && !user.isGuest && (
                       <Link
                         href="/editor"
