@@ -33,34 +33,45 @@ export async function POST(
       );
     }
 
-    // 2. Check staff status via User table
+    // 2. Check staff status via User table (with hardcoded admin fallback)
     const sb = getSupabaseAdmin();
-    const { data: dbUser, error: userErr } = await sb
-      .from("User")
-      .select("id, email, isStaff, isSuperuser, profile: UserProfile(role)")
-      .eq("email", user.email ?? "")
-      .maybeSingle();
+    const userEmail = user.email?.toLowerCase() ?? "";
+    const ADMIN_EMAILS = ["roadsafetydar@gmail.com"];
 
-    if (userErr) {
-      console.error("[verify] user lookup error:", userErr.message);
-      return NextResponse.json(
-        { error: "Failed to verify permissions." },
-        { status: 500 }
-      );
-    }
+    // Find the local dbUser for audit log purposes (may be null for hardcoded admins)
+    let dbUser: any = null;
 
-    const role = (dbUser as any)?.profile?.role ?? "community";
-    const isStaff =
-      (dbUser as any)?.isStaff === true ||
-      (dbUser as any)?.isSuperuser === true ||
-      role === "editor" ||
-      role === "admin";
+    if (!ADMIN_EMAILS.includes(userEmail)) {
+      // Not a hardcoded admin — check via DB
+      const { data: foundUser, error: userErr } = await sb
+        .from("User")
+        .select("id, email, isStaff, isSuperuser, profile: UserProfile(role)")
+        .eq("email", user.email ?? "")
+        .maybeSingle();
 
-    if (!isStaff) {
-      return NextResponse.json(
-        { error: "Forbidden — staff access required." },
-        { status: 403 }
-      );
+      if (userErr) {
+        console.error("[verify] user lookup error:", userErr.message);
+        return NextResponse.json(
+          { error: "Failed to verify permissions." },
+          { status: 500 }
+        );
+      }
+
+      dbUser = foundUser;
+
+      const role = dbUser?.profile?.role ?? "community";
+      const isStaff =
+        dbUser?.isStaff === true ||
+        dbUser?.isSuperuser === true ||
+        role === "editor" ||
+        role === "admin";
+
+      if (!isStaff) {
+        return NextResponse.json(
+          { error: "Forbidden — staff access required." },
+          { status: 403 }
+        );
+      }
     }
 
     // 3. Apply the verification
@@ -84,7 +95,7 @@ export async function POST(
       // Best-effort audit log
       await sb.from("AuditLog").insert({
         accidentId,
-        userId: (dbUser as any)?.id ?? null,
+        userId: dbUser?.id ?? null,
         action: "verified",
         description: "Verified by editor",
       });
@@ -108,7 +119,7 @@ export async function POST(
 
       await sb.from("AuditLog").insert({
         accidentId,
-        userId: (dbUser as any)?.id ?? null,
+        userId: dbUser?.id ?? null,
         action: "rejected",
         description: body.reason || "Rejected by editor",
       });

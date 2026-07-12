@@ -10,6 +10,9 @@ import { getSupabaseAdmin } from "@/lib/supabase-server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Hardcoded admin emails that bypass the DB check for Google OAuth users. */
+const ADMIN_EMAILS = ["roadsafetydar@gmail.com"];
+
 export async function GET(request: NextRequest) {
   try {
     // Auth check
@@ -20,15 +23,21 @@ export async function GET(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
 
-    // Check superuser
-    const { data: dbUser } = await admin
-      .from("User")
-      .select("id, isSuperuser")
-      .eq("email", user.email ?? "")
-      .maybeSingle();
+    // Check superuser — fallback to hardcoded admin emails for Google OAuth users
+    // whose email may not exist in the local User table yet.
+    const userEmail = user.email?.toLowerCase() ?? "";
+    if (ADMIN_EMAILS.includes(userEmail)) {
+      // Hardcoded admin — skip DB check
+    } else {
+      const { data: dbUser } = await admin
+        .from("User")
+        .select("id, isSuperuser")
+        .eq("email", user.email ?? "")
+        .maybeSingle();
 
-    if (!(dbUser as any)?.isSuperuser) {
-      return NextResponse.json({ error: "Forbidden — superuser access required" }, { status: 403 });
+      if (!(dbUser as any)?.isSuperuser) {
+        return NextResponse.json({ error: "Forbidden — superuser access required" }, { status: 403 });
+      }
     }
 
     // Fetch all users with their profiles
@@ -61,15 +70,18 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
 
-    // Check superuser
-    const { data: dbUser } = await admin
-      .from("User")
-      .select("id, isSuperuser")
-      .eq("email", user.email ?? "")
-      .maybeSingle();
+    // Check superuser — fallback to hardcoded admin emails
+    const userEmail = user.email?.toLowerCase() ?? "";
+    if (!ADMIN_EMAILS.includes(userEmail)) {
+      const { data: dbUser } = await admin
+        .from("User")
+        .select("id, isSuperuser")
+        .eq("email", user.email ?? "")
+        .maybeSingle();
 
-    if (!(dbUser as any)?.isSuperuser) {
-      return NextResponse.json({ error: "Forbidden — superuser access required" }, { status: 403 });
+      if (!(dbUser as any)?.isSuperuser) {
+        return NextResponse.json({ error: "Forbidden — superuser access required" }, { status: 403 });
+      }
     }
 
     const body = await request.json();

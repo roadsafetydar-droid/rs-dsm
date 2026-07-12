@@ -68,12 +68,15 @@ export default function EditorPage() {
       setUser(data.supabaseUser);
       setRole(data.role);
 
-      // Check permission: editor role, isStaff, or isSuperuser
+      // Check permission: editor role, isStaff, isSuperuser, or hardcoded admin email
+      const userEmail = data.supabaseUser?.email?.toLowerCase() ?? "";
+      const isAdminEmail = userEmail === "roadsafetydar@gmail.com";
       const isStaff =
         data.role === "editor" ||
         data.role === "admin" ||
         data.dbUser?.isStaff === true ||
-        data.dbUser?.isSuperuser === true;
+        data.dbUser?.isSuperuser === true ||
+        isAdminEmail;
 
       if (!isStaff) {
         router.push("/dashboard");
