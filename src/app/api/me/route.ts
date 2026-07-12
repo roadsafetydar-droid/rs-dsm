@@ -10,7 +10,8 @@
 // recognized as admin even if the DB link hasn't been created yet.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getSupabaseAdmin } from "@/lib/supabase-server";
+import { createServerClient } from "@supabase/ssr";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,9 +19,22 @@ export const dynamic = "force-dynamic";
 /** Hardcoded admin emails that should always have superuser access. */
 const ADMIN_EMAILS = ["roadsafetydar@gmail.com"];
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const sb = createClient();
+    // CRITICAL: Use @supabase/ssr createServerClient to read session cookies
+    // from the incoming request. The service-role client (getSupabaseAdmin)
+    // does NOT read cookies — it would return { user: null } for browser
+    // requests, breaking Google OAuth profile loading.
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+    const sb = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll() { /* read-only — we don't set cookies here */ },
+      },
+    });
+
     const {
       data: { user },
     } = await sb.auth.getUser();

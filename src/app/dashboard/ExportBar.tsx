@@ -28,14 +28,10 @@ export function ExportBar({
     setNotice(null);
     try {
       const params = new URLSearchParams();
-      if (selectedHour && selectedHour !== "all") {
-        // Hour filter is hour-of-day 0-23. We don't translate that to dates here —
-        // quick export uses whatever the API returns, no time filter.
-        // (We do send a status default of "verified" so reports are clean.)
-        params.set("status", "verified");
-      } else {
-        params.set("status", "verified");
-      }
+      // Export ALL incidents visible in the dashboard — don't filter by
+      // verification status since the dashboard shows all statuses.
+      // The old default of "status=verified" caused "No incidents match"
+      // when incidents in view have mixed statuses.
       const url = `/api/accidents/export?${params.toString()}`;
       await runExport(url, format, (filename) => {
         setNotice(`Downloaded ${filename}`);
