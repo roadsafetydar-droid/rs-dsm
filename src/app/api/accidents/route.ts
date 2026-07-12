@@ -118,28 +118,21 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const lat = Number(body.lat);
-  const lng = Number(body.lng);
-  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
-    errors.push("lat must be a number between -90 and 90");
-  }
-  if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
-    errors.push("lng must be a number between -180 and 180");
-  }
+  // GPS coordinates — if the browser provides them use them, otherwise default
+  // to Dar es Salaam center so the report still goes through. The user's
+  // district/ward/street selection is the primary location indicator.
+  const rawLat = Number(body.lat);
+  const rawLng = Number(body.lng);
+  const lat =
+    Number.isFinite(rawLat) && rawLat >= -90 && rawLat <= 90
+      ? rawLat
+      : -6.792;
+  const lng =
+    Number.isFinite(rawLng) && rawLng >= -180 && rawLng <= 180
+      ? rawLng
+      : 39.208;
 
   const contact = String(body.contact ?? "").trim();
-  if (!contact) {
-    errors.push(
-      "contact is required (phone or email so the community can be reached)"
-    );
-  } else {
-    // Basic sanity: must look like a phone (>= 6 digits, optional +) or email
-    const looksLikePhone = /^[+]?[\d\s\-()]{6,}$/.test(contact);
-    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
-    if (!looksLikePhone && !looksLikeEmail) {
-      errors.push("contact must be a valid phone number or email address");
-    }
-  }
 
   const casualties = Number(body.casualties ?? 0) || 0;
   const fatalities = Number(body.fatalities ?? 0) || 0;
@@ -154,17 +147,11 @@ export async function POST(request: NextRequest) {
     : "";
   const district = body.district ? String(body.district).trim() : "";
   const ward = body.ward ? String(body.ward).trim() : "";
-  // The DB column is NOT NULL but the report form has no real FK to a Location
-  // table yet (it sends a street NAME string). Editors will assign the proper
-  // Location row during verification. We send 0 as a sentinel for "pending
-  // assignment" so the insert satisfies the NOT NULL constraint without
-  // inventing a fake reference.
-  const locationIdRaw = body.locationId
-    ? Number(body.locationId)
-    : NaN;
-  const locationId = Number.isFinite(locationIdRaw) && locationIdRaw > 0
-    ? locationIdRaw
-    : 0;
+  // The form sends the street name string as locationId; the DB column is TEXT
+  // so store it directly. Editors can reassign the proper Location row later.
+  const locationId = body.locationId
+    ? String(body.locationId).trim()
+    : "";
   const photoUrl = body.photoUrl ? String(body.photoUrl).trim() : "";
   const occurredAt = body.occurredAt
     ? new Date(body.occurredAt).toISOString()
@@ -201,7 +188,7 @@ export async function POST(request: NextRequest) {
     updatedAt: new Date().toISOString(),
     verificationStatus: "pending",
     verified: false,
-    trustLevel: 0,
+    trustLevel: "anonymous",
     upvoteCount: 0,
     reporterType: "community",
   };

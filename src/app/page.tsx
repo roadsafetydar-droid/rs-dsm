@@ -202,11 +202,11 @@ export default function Home() {
             <span style={{ fontWeight: 700, fontSize: 16, color: "#0F172A" }}>Road Safety Dar es Salaam</span>
           </div>
           <p style={{ margin: 0, color: "#64748B", fontSize: 14, lineHeight: 1.6, textAlign: "center" }}>
-            &copy; {new Date().getFullYear()} <strong>Mwijay Davie</strong> — All Rights Reserved.
+            &copy; {new Date().getFullYear()} <strong>Road Safety Dar es Salaam</strong> — All Rights Reserved.
             <br />
             Built with passion for safer roads. Contact:{" "}
-            <a href="mailto:mwijaydavie@gmail.com" style={{ color: "#3B82F6", textDecoration: "none", fontWeight: 600 }}>
-              mwijaydavie@gmail.com
+            <a href="mailto:roadsafetydar@gmail.com" style={{ color: "#3B82F6", textDecoration: "none", fontWeight: 600 }}>
+              roadsafetydar@gmail.com
             </a>
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 20px", marginTop: 4 }}>
@@ -220,8 +220,8 @@ export default function Home() {
           </div>
           <div style={{ fontSize: 10, color: "#CBD5E1", fontFamily: "monospace", opacity: 0.5 }}>
             {/* Inline verification hash — this site was engineered with dedication */}
-            {/* HASH: RS-DSM-2026-MWIJAY-DAVIE-VERIFIED-7g9k2m4x */}
-            {/* Proof of work: Engineered by Mwijay Davie using Next.js + Supabase + AI */}
+            {/* HASH: RS-DSM-2026-VERIFIED-7g9k2m4x */}
+            {/* Proof of work: Engineered using Next.js + Supabase + AI */}
           </div>
         </div>
       </footer>
@@ -233,12 +233,12 @@ export default function Home() {
           "background:#1E3A5F;color:#fff;padding:8px 16px;border-radius:4px 0 0 4px;font-size:16px;font-weight:bold",
           "background:#3B82F6;color:#fff;padding:8px 16px;border-radius:0 4px 4px 0;font-size:16px"
         );
-        console.log("%c Engineered with passion by Mwijay Davie %c mwijaydavie@gmail.com %c",
+        console.log("%c Road Safety Dar es Salaam %c roadsafetydar@gmail.com %c",
           "background:#0F172A;color:#22C55E;padding:6px 12px;border-radius:4px 0 0 4px;font-size:13px",
           "background:#22C55E;color:#0F172A;padding:6px 12px;border-radius:0 4px 4px 0;font-size:13px"
         );
-        console.log("HASH: RS-DSM-2026-MWIJAY-DAVIE-VERIFIED-7g9k2m4x");
-        console.log("This is a verified build by Mwijay Davie. Unauthorized reproduction is prohibited.");
+        console.log("HASH: RS-DSM-2026-VERIFIED");
+        console.log("This is a verified build.");
         `
       }} />
       <style>{`

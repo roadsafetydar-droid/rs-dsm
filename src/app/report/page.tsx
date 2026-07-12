@@ -25,6 +25,8 @@ export default function ReportPage() {
     weather: "",
     roadCondition: "",
     contact: "",
+    lat: 0,
+    lng: 0,
     mood: "" as "" | "sad" | "tragic" | "hopeful" | "miraculous",
   });
 
@@ -76,29 +78,48 @@ export default function ReportPage() {
     setSelectedStreet("");
   }, [selectedDistrict, selectedWard]);
 
+  // Silently attempt GPS on page load
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm((f) => ({ ...f, lat: pos.coords.latitude, lng: pos.coords.longitude }));
+      },
+      () => { /* silent fail — user can set location manually via dropdowns */ }
+    );
+  }, []);
+
   const getLocation = () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude; const lng = pos.coords.longitude;
         setForm((f) => ({ ...f, lat, lng }));
-        alert(`GPS captured: ${lat.toFixed(4)}, ${lng.toFixed(4)}.\n\nSelect District → Ward → Street below.`);
       },
       () => alert("Could not get location. Enable GPS on your device.")
     );
   };
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg("");
+    if (!selectedDistrict) { setErrorMsg("Please select a district."); setLoading(false); return; }
+    if (!selectedWard) { setErrorMsg("Please select a ward."); setLoading(false); return; }
     const baseDescription = (form.description || "").trim();
+    if (!baseDescription) { setErrorMsg("Please describe what happened."); setLoading(false); return; }
     const descriptionWithMood = form.mood ? `[mood:${form.mood}] ${baseDescription}`.trim() : baseDescription;
     const payload = { ...form, description: descriptionWithMood, photoUrl, occurredAt: new Date().toISOString(), district: selectedDistrict, ward: selectedWard, locationId: selectedStreet };
     try {
       const res = await fetch("/api/accidents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (res.ok) setSubmitted(true);
-      else alert("Failed to submit report");
-    } catch { alert("Network error"); }
+      else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(data?.detail || data?.error || "Failed to submit report");
+      }
+    } catch { setErrorMsg("Network error — please check your connection and try again."); }
     setLoading(false);
   };
 
@@ -300,6 +321,11 @@ export default function ReportPage() {
               </label>
             </div>
 
+            {errorMsg && (
+              <div style={{ background: "#FEF2F2", color: "#DC2626", padding: "12px 16px", borderRadius: 10, fontSize: 14, marginBottom: 12, border: "1px solid #FECACA" }}>
+                {errorMsg}
+              </div>
+            )}
             <button type="submit" disabled={loading}
               style={{
                 width: "100%", background: "#3B82F6", color: "#fff", border: "none",

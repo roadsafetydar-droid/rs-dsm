@@ -644,7 +644,7 @@ export default function LoginPage() {
             <span style={{ fontWeight: 700, fontSize: 13, color: "#0F172A" }}>Road Safety Dar es Salaam</span>
           </div>
           <div style={{ fontSize: 11, color: "#64748B" }}>
-            &copy; {new Date().getFullYear()} <strong>Mwijay Davie</strong>
+            &copy; {new Date().getFullYear()} <strong>Road Safety Dar es Salaam</strong>
           </div>
         </div>
       </footer>

@@ -68,7 +68,7 @@ function drawFooter(doc: jsPDF, pageNumber: number, totalPages: number): void {
   doc.setFontSize(7.5);
   doc.setTextColor(SLATE_500[0], SLATE_500[1], SLATE_500[2]);
   doc.text(
-    "Road Safety Dar es Salaam · mwijaydavie@gmail.com",
+    "Road Safety Dar es Salaam · roadsafetydar@gmail.com",
     PAGE_MARGIN,
     FOOTER_Y
   );
