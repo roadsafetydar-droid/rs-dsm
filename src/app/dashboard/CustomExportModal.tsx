@@ -86,6 +86,10 @@ export function CustomExportModal({
         );
         if (!res.ok) throw new Error("count failed");
         const body = await res.json();
+        // Guard against API returning an error object instead of ExportResponse
+        if (!body || typeof body !== "object" || body.error) {
+          throw new Error(body?.error || "API returned an error");
+        }
         setCount(body.count ?? 0);
       } catch (e) {
         if ((e as Error).name !== "AbortError") {

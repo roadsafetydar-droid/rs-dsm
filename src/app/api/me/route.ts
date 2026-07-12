@@ -32,6 +32,12 @@ export async function GET(_request: NextRequest) {
       console.error("[api/me] profile lookup error:", pErr.message);
     }
 
+    // Extract avatar from Supabase user metadata
+    const avatarUrl: string | undefined =
+      (user.user_metadata as any)?.avatar_url ||
+      (user.user_metadata as any)?.picture ||
+      undefined;
+
     if (!profile) {
       // Fallback: build a basic profile from Supabase user
       return NextResponse.json({
@@ -39,6 +45,7 @@ export async function GET(_request: NextRequest) {
           email: user.email,
           firstName: user.email?.split("@")[0] || "User",
           lastName: "",
+          avatar: avatarUrl,
           role: "community",
           isStaff: false,
           isSuperuser: false,
@@ -52,6 +59,7 @@ export async function GET(_request: NextRequest) {
         email: dbUser?.email ?? user.email,
         firstName: dbUser?.firstName ?? (user.email?.split("@")[0] || "User"),
         lastName: dbUser?.lastName ?? "",
+        avatar: avatarUrl,
         role: (profile as any).role ?? "community",
         isStaff: dbUser?.isStaff === true,
         isSuperuser: dbUser?.isSuperuser === true,

@@ -220,9 +220,20 @@ async function runExport(
 ) {
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`Export API returned ${res.status}`);
+    let detail = `Export API returned ${res.status}`;
+    try {
+      const errBody = await res.json();
+      if (errBody?.error) detail = errBody.error;
+      if (errBody?.detail) detail += `: ${errBody.detail}`;
+    } catch {}
+    throw new Error(detail);
   }
-  const body = (await res.json()) as import("@/lib/export/types").ExportResponse;
+  const body = await res.json();
+
+  // Check if the API returned an error object instead of a valid ExportResponse
+  if (!body || typeof body !== "object" || body.error) {
+    throw new Error(body?.error || body?.detail || "Export API returned an unexpected response");
+  }
 
   if (body.count === 0) {
     onDownloaded(""); // no-op; parent will show "no incidents"

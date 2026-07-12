@@ -55,6 +55,49 @@ function splitMood(description?: string | null): { text: string; mood: Mood | nu
   return { text: description.slice(m[0].length), mood: m[1].toLowerCase() as Mood };
 }
 
+/** Safely parse an API response into an array of accidents. */
+async function fetchAccidents(url: string): Promise<Accident[]> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`[dashboard] fetchAccidents returned ${res.status}`);
+      return [];
+    }
+    const data = await res.json();
+    // If the API returns an error object instead of an array, handle gracefully
+    if (!Array.isArray(data)) {
+      if (data && typeof data === "object" && "error" in data) {
+        console.warn("[dashboard] API returned error:", data.error, data.detail);
+      }
+      return [];
+    }
+    return data as Accident[];
+  } catch (err) {
+    console.error("[dashboard] fetchAccidents network error:", err);
+    return [];
+  }
+}
+
+/** Safely parse an API response into Stats. */
+async function fetchStats(url: string): Promise<Stats | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`[dashboard] fetchStats returned ${res.status}`);
+      return null;
+    }
+    const data = await res.json();
+    if (!data || typeof data !== "object" || "error" in data) {
+      console.warn("[dashboard] Stats API returned error:", data?.error);
+      return null;
+    }
+    return data as Stats;
+  } catch (err) {
+    console.error("[dashboard] fetchStats network error:", err);
+    return null;
+  }
+}
+
 export default function DashboardPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -90,8 +133,8 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/accidents").then((r) => r.json()).then(setAccidents);
-    fetch("/api/stats").then((r) => r.json()).then(setStats);
+    fetchAccidents("/api/accidents").then(setAccidents);
+    fetchStats("/api/stats").then(setStats);
     // Check stored user
     const stored = localStorage.getItem("rsd_user");
     if (stored) setUser(JSON.parse(stored));
@@ -157,7 +200,19 @@ export default function DashboardPage() {
           })
       : filtered;
 
-    const points = filtered.map((a) => [a.lat, a.lng, a.intensity]);
+    // Build heatmap points safely: Leaflet-heat can throw/behave oddly if it receives invalid points
+    // (empty arrays, NaN/Infinity, or missing intensity).
+    const points = filtered
+      .map((a) => {
+        const lat = Number(a.lat);
+        const lng = Number(a.lng);
+        const intensity = Number((a as any).intensity);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        if (!Number.isFinite(intensity)) return null;
+        return [lat, lng, intensity] as [number, number, number];
+      })
+      .filter(Boolean) as [number, number, number][];
+
     if (points.length > 0) {
       heatRef.current = (L as any).heatLayer(points, {
         radius: 25,
@@ -167,6 +222,7 @@ export default function DashboardPage() {
         gradient: { 0.4: "#22C55E", 0.6: "#FBBF24", 0.8: "#F87171", 1: "#DC2626" },
       }).addTo(map);
     }
+
 
     // Add markers with popups
     displayList.forEach((a) => {
