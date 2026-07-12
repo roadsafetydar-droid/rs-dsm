@@ -12,6 +12,12 @@ export async function middleware(request: NextRequest) {
   const protectedPaths = ["/dashboard", "/report", "/editor", "/authority"];
   const isProtected = protectedPaths.some((p) => path.startsWith(p));
 
+  // Guest cookie bypass — localStorage rsd_user has isGuest=true and we mirror via cookie
+  const isGuest = request.cookies.get("rsd_guest")?.value === "1";
+  if (isProtected && isGuest) {
+    return NextResponse.next({ request });
+  }
+
   // If Supabase not configured, allow all (for setup/debug)
   if (!supabaseUrl || !supabaseKey) {
     return NextResponse.next({ request });

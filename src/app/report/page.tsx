@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import PremiumTopNav from "@/components/PremiumTopNav";
+
 
 interface Ward {
   name: string;
@@ -103,14 +105,20 @@ export default function ReportPage() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setForm((f) => ({ ...f, lat: pos.coords.latitude, lng: pos.coords.longitude }));
-        alert(`Location captured: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setForm((f) => ({ ...f, lat, lng }));
+        alert(
+          `GPS captured: ${lat.toFixed(4)}, ${lng.toFixed(4)}.\n\n` +
+            `Select District → Ward → Street below (GPS only fills lat/lng in this version).`
+        );
       },
       () => alert("Could not get location. Enable GPS on your device.")
-    );
+        );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setLoading(true);
 
@@ -157,16 +165,8 @@ export default function ReportPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
-      {/* Topbar */}
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: "#3B82F6", color: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 19 }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
-          Road Safety Dar es Salaam
-        </div>
-        <nav style={{ display: "flex", gap: 16 }}>
-          <Link href="/dashboard" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Dashboard</Link>
-        </nav>
-      </header>
+      <PremiumTopNav variant="report" />
+
 
       <main style={{ maxWidth: 760, margin: "0 auto", padding: "48px 24px" }}>
           <div style={{ background: "#fff", padding: 48, borderRadius: 28, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>

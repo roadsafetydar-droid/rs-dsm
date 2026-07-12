@@ -1,35 +1,11 @@
 import Link from "next/link";
+import PremiumTopNav from "@/components/PremiumTopNav";
 
 export default function Home() {
   return (
     <>
-      {/* Topbar — Premium Glass Design */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "12px 32px",
-          background: "linear-gradient(135deg, #1E3A5F 0%, #2563EB 50%, #3B82F6 100%)",
-          color: "#fff",
-          position: "sticky",
-          top: 0,
-          zIndex: 1000,
-          boxShadow: "0 4px 20px rgba(37, 99, 235, 0.25)",
-          backdropFilter: "blur(10px)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", color: "#fff", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontWeight: 700, fontSize: "20px", letterSpacing: "-0.3px" }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 30, height: 30, objectFit: "contain" }} />
-          <span>Road Safety <span style={{ color: "#93C5FD" }}>Dar es Salaam</span></span>
-        </Link>
-        <nav style={{ display: "flex", alignItems: "center", gap: "28px" }}>
-          <Link href="/dashboard/" className="topbar-link">Dashboard</Link>
-          <Link href="/report/" className="topbar-link">Report</Link>
-          <Link href="/login" className="btn-signin">Sign In</Link>
-        </nav>
-      </header>
+      <PremiumTopNav variant="default" />
+
 
       <main style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 24px" }}>
         {/* Hero Section */}
@@ -40,7 +16,7 @@ export default function Home() {
               <span style={{ color: "#60A5FA" }}>Dar es Salaam</span>
             </h1>
             <p style={{ margin: "12px 0 0", fontSize: "20px", color: "#94A3B8", maxWidth: "56ch" }}>
-              Real-time accident hotspot intelligence for Tanzania's commercial capital. Crowdsourced reports, official police data, and AI-powered safety insights for every junction.
+              Real-time accident hotspot intelligence for Tanzania's commercial capital. Crowdsourced reports and official police data, verified for every junction.
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "16px", position: "relative", flexShrink: 0 }}>
@@ -72,9 +48,6 @@ export default function Home() {
           <Link href="/report/" className="btn-primary">+ Report Accident</Link>
           <Link href="/dashboard/" className="btn-secondary">Hotspot Map</Link>
           <Link href="/login" className="btn-ghost">Sign In</Link>
-          <div className="lang-switch">
-            <a href="/">EN</a> | <a href="/sw/">SW</a>
-          </div>
         </div>
 
         {/* Featured Stat Cards */}
@@ -83,7 +56,7 @@ export default function Home() {
             { label: "Total Reports", sublabel: "Crowdsourced + official", value: "1,200+", icon: "/add-report.png", gradient: "linear-gradient(135deg, #DBEAFE, #FFFFFF)", color: "#3B82F6" },
             { label: "Fatal Accidents", sublabel: "Since Jan 2024", value: "45", icon: "/stone-hazard.png", gradient: "linear-gradient(135deg, #FEE2E2, #FFFFFF)", color: "#F87171" },
             { label: "Tracked Junctions", sublabel: "Across 5 districts", value: "60+", icon: "/map-icon.png", gradient: "linear-gradient(135deg, #FEF3C7, #FFFFFF)", color: "#D97706" },
-            { label: "Police Verified", sublabel: "Official records", value: "850+", icon: "/badge-72x72.png", gradient: "linear-gradient(135deg, #DCFCE7, #FFFFFF)", color: "#16A34A" },
+            { label: "Police Verified", sublabel: "Official records", value: "850+", icon: "/fingerprint-icon.png", gradient: "linear-gradient(135deg, #DCFCE7, #FFFFFF)", color: "#16A34A" },
           ].map((card) => (
             <div key={card.label} className="featured-stat-card" style={{ background: card.gradient }}>
               <img src={card.icon} alt="" style={{ width: 44, height: 44, objectFit: "contain", opacity: 0.7, marginBottom: 8 }} />
@@ -125,9 +98,9 @@ export default function Home() {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {[
                 { icon: "📍", text: "Crowdsourced accident reports from citizens across all 5 districts" },
-                { icon: "🤖", text: "AI-powered recommendations for high-risk junctions" },
+                { icon: "🤖", text: "Recommendations for high-risk junctions" },
                 { icon: "👮", text: "Police verification workflow for data integrity" },
-                { icon: "📊", text: "Real-time statistics and CSV data export" },
+                { icon: "📊", text: "Statistics dashboard and PDF + Excel data export" },
               ].map((f) => (
                 <div key={f.text} className="feature-item">
                   <span style={{ fontSize: "24px" }}>{f.icon}</span>
@@ -276,9 +249,7 @@ export default function Home() {
         .btn-secondary:hover { background-color: #3B82F6; box-shadow: 0px 15px 20px rgba(59, 130, 246, 0.4); color: #fff; transform: translateY(-7px); }
         .btn-ghost { background: transparent; box-shadow: none; color: #000; }
         .btn-ghost:hover { background: #f1f5f9; box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.08); transform: translateY(-3px); }
-        .lang-switch { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 16px; color: #475569; }
-        .lang-switch a { color: #3B82F6; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 8px; }
-        .lang-switch a:hover { background: #DBEAFE; }
+
         .featured-stat-grid {
           display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
           gap: 24px; margin: 48px 0;
@@ -342,7 +313,6 @@ export default function Home() {
           .kpi-value { font-size: 28px !important; }
           .action-bar { flex-direction: column; align-items: stretch; padding: 16px 20px; }
           .btn-primary, .btn-secondary, .btn-ghost { justify-content: center; min-height: 48px; padding: 1em 2em; font-size: 11px; }
-          .lang-switch { margin-left: 0; justify-content: center; margin-top: 8px; }
           .charts-grid { grid-template-columns: 1fr !important; }
           .chart-card.wide { grid-column: span 1 !important; }
           .featured-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }

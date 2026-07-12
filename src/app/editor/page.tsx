@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+
+import PremiumTopNav from "@/components/PremiumTopNav";
 import { createClient } from "@/lib/supabase-browser";
+
 
 interface AccidentItem {
   id: number;
@@ -56,7 +58,11 @@ export default function EditorPage() {
 
   const handleVerify = async (id: number) => {
     setActionId(id);
-    await fetch(`/api/accidents/${id}/verify`, { method: "POST", body: JSON.stringify({ status: "verified" }) });
+    await fetch(`/api/accidents/${id}/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "verified" }),
+    });
     setAccidents((prev) => prev.filter((a) => a.id !== id));
     setActionId(null);
   };
@@ -65,7 +71,11 @@ export default function EditorPage() {
     const reason = prompt("Rejection reason:");
     if (!reason) return;
     setActionId(id);
-    await fetch(`/api/accidents/${id}/verify`, { method: "POST", body: JSON.stringify({ status: "rejected", reason }) });
+    await fetch(`/api/accidents/${id}/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "rejected", reason }),
+    });
     setAccidents((prev) => prev.filter((a) => a.id !== id));
     setActionId(null);
   };
@@ -77,19 +87,10 @@ export default function EditorPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: "#3B82F6", color: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 19 }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
-          Editor Queue
-        </div>
-        <nav style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <Link href="/dashboard" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Dashboard</Link>
-          <Link href="/authority" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Authority</Link>
-          <span style={{ color: "#93C5FD", fontSize: 13 }}>{user?.email}</span>
-        </nav>
-      </header>
+      <PremiumTopNav variant="editor" />
 
       <main style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px" }}>
+
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ margin: 0, fontSize: 24 }}>Verification Queue</h2>
           <div style={{ display: "flex", gap: 8 }}>

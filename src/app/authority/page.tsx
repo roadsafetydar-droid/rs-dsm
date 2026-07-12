@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-browser";
+import PremiumTopNav from "@/components/PremiumTopNav";
 
 interface Stats {
   total: number;
@@ -46,19 +47,8 @@ export default function AuthorityPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: "#1E293B", color: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 19 }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain", filter: "brightness(10)" }} />
-          Authority Dashboard
-        </div>
-        <nav style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <Link href="/dashboard" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Map</Link>
-          <Link href="/editor" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Queue</Link>
-          <span style={{ color: "#94A3B8", fontSize: 13 }}>{user?.email}</span>
-        </nav>
-      </header>
-
-      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px" }}>
+      <PremiumTopNav variant="authority" />
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px" }}>
         <h2 style={{ margin: "0 0 24px", fontSize: 24 }}>Traffic Authority Overview</h2>
 
         {stats && (
@@ -135,7 +125,7 @@ export default function AuthorityPage() {
             </div>
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }

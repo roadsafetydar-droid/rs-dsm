@@ -1,51 +1,76 @@
+// GET /api/accidents
+// Lists accidents from Supabase REST. Optional ?status=pending|verified|rejected filter.
+
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const ALLOWED_STATUS = ["pending", "verified", "rejected"] as const;
+type Status = (typeof ALLOWED_STATUS)[number];
+
+const SEVERITY_WEIGHT: Record<string, number> = {
+  minor: 1,
+  serious: 2,
+  critical: 3,
+  fatal: 4,
+};
 
 export async function GET(request: NextRequest) {
+  const start = Date.now();
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status");
+  const statusRaw = searchParams.get("status");
+  const status: Status | null =
+    statusRaw && (ALLOWED_STATUS as readonly string[]).includes(statusRaw)
+      ? (statusRaw as Status)
+      : null;
 
-  const where: any = {};
-  if (status && ["pending", "verified", "rejected"].includes(status)) {
-    where.verificationStatus = status;
+  const sb = getSupabaseAdmin();
+
+  let query = sb
+    .from("Accident")
+    .select(
+      "id, lat, lng, severity, vehicleTypes, district, junctionName, occurredAt, casualties, fatalities, verified, trustLevel, upvoteCount, verificationStatus, photoUrl, description"
+    )
+    .order("occurredAt", { ascending: false })
+    .limit(1000);
+
+  if (status) {
+    query = query.eq("verificationStatus", status);
   }
 
-  const accidents = await prisma.accident.findMany({
-    where,
-    orderBy: { occurredAt: "desc" },
-    select: {
-      id: true,
-      lat: true,
-      lng: true,
-      severity: true,
-      vehicleTypes: true,
-      district: true,
-      junctionName: true,
-      occurredAt: true,
-      casualties: true,
-      fatalities: true,
-      verified: true,
-      trustLevel: true,
-      upvoteCount: true,
-      verificationStatus: true,
-      photoUrl: true,
-      description: true,
-    },
+  const { data: rows, error } = await query;
+
+  if (error) {
+    console.error("[api/accidents] supabase error:", error.message);
+    return NextResponse.json(
+      {
+        error: "Upstream database error",
+        detail: error.message,
+        _meta: { source: "supabase-failed", latencyMs: Date.now() - start },
+      },
+      { status: 503 }
+    );
+  }
+
+  const data = (rows ?? []).map((a: any) => {
+    let vehicleTypes: string[] = [];
+    try {
+      vehicleTypes = JSON.parse(a.vehicleTypes || "[]");
+    } catch {
+      /* ignore */
+    }
+    return {
+      ...a,
+      vehicleTypes,
+      intensity: SEVERITY_WEIGHT[a.severity] || 1,
+      occurredAt:
+        typeof a.occurredAt === "string"
+          ? a.occurredAt
+          : new Date(a.occurredAt).toISOString(),
+    };
   });
-
-  const weight: Record<string, number> = {
-    minor: 1,
-    serious: 2,
-    critical: 3,
-    fatal: 4,
-  };
-
-  const data = accidents.map((a) => ({
-    ...a,
-    vehicleTypes: JSON.parse(a.vehicleTypes as string),
-    intensity: weight[a.severity] || 1,
-    occurredAt: a.occurredAt.toISOString(),
-  }));
 
   return NextResponse.json(data);
 }

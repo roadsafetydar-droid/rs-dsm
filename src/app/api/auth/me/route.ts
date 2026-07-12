@@ -1,48 +1,79 @@
+// GET /api/auth/me
+// Returns the current Supabase user + the linked UserProfile role + User flags.
+
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
-import { prisma } from "@/lib/prisma";
+import { createClient, getSupabaseAdmin } from "@/lib/supabase-server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const sb = createClient();
+    const {
+      data: { user },
+    } = await sb.auth.getUser();
 
-  if (!user) return NextResponse.json({ user: null });
+    if (!user) {
+      return NextResponse.json({ user: null });
+    }
 
-  let profile = null;
-  let dbUser = null;
+    const admin = getSupabaseAdmin();
 
-  if (user.id) {
-    profile = await prisma.userProfile.findUnique({
-      where: { supabaseUid: user.id },
-      include: { user: true },
-    });
+    // Try to find a UserProfile linked to this Supabase UID
+    const { data: profile } = await admin
+      .from("UserProfile")
+      .select("userId, role, user:User(id, username, email, isStaff, isSuperuser)")
+      .eq("supabaseUid", user.id)
+      .maybeSingle();
 
-    if (profile) dbUser = profile.user;
+    let dbUser: any = (profile as any)?.user ?? null;
 
-    // Fallback: match by email for existing Django users
+    // Fallback: try email match (for users created before profile link existed)
     if (!dbUser && user.email) {
-      dbUser = await prisma.user.findUnique({ where: { email: user.email } });
+      const { data: emailMatch } = await admin
+        .from("User")
+        .select("id, username, email, isStaff, isSuperuser")
+        .eq("email", user.email)
+        .maybeSingle();
+      dbUser = emailMatch;
+
+      // If matched by email, link the profile to this Supabase UID
       if (dbUser) {
-        // Link the Supabase UID to the existing Django user profile
-        await prisma.userProfile.upsert({
-          where: { userId: dbUser.id },
-          update: { supabaseUid: user.id },
-          create: { userId: dbUser.id, role: dbUser.isSuperuser ? "admin" : "community", supabaseUid: user.id },
-        });
+        await admin.from("UserProfile").upsert(
+          {
+            userId: dbUser.id,
+            role: dbUser.isSuperuser ? "admin" : "community",
+            supabaseUid: user.id,
+          },
+          { onConflict: "userId" }
+        );
       }
     }
-  }
 
-  return NextResponse.json({
-    supabaseUser: {
-      id: user.id,
-      email: user.email,
-      name: user.user_metadata?.full_name || user.email,
-      avatar: user.user_metadata?.avatar_url || null,
-    },
-    role: profile?.role || "community",
-    dbUser: dbUser
-      ? { id: dbUser.id, username: dbUser.username, email: dbUser.email, isStaff: dbUser.isStaff, isSuperuser: dbUser.isSuperuser }
-      : null,
-  });
+    return NextResponse.json({
+      supabaseUser: {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email,
+        avatar: user.user_metadata?.avatar_url || null,
+      },
+      role: (profile as any)?.role ?? "community",
+      dbUser: dbUser
+        ? {
+            id: dbUser.id,
+            username: dbUser.username,
+            email: dbUser.email,
+            isStaff: dbUser.isStaff === true,
+            isSuperuser: dbUser.isSuperuser === true,
+          }
+        : null,
+    });
+  } catch (err) {
+    console.error("[api/auth/me] error:", err);
+    return NextResponse.json(
+      { user: null, error: "Server error" },
+      { status: 500 }
+    );
+  }
 }

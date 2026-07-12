@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import PremiumTopNav from "@/components/PremiumTopNav";
+import { ExportBar } from "./ExportBar";
 
 interface Accident {
   id: number;
@@ -145,39 +147,23 @@ export default function DashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
-      {/* Topbar */}
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: "#3B82F6", color: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src="/accident-protection.png" alt="" style={{ width: 32, height: 32, objectFit: "contain" }} />
-          <span style={{ fontWeight: 700, fontSize: 19, fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif' }}>
-            Road Safety Dar es Salaam
-          </span>
-        </div>
-        <nav style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <Link href="/dashboard" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Dashboard</Link>
-          <Link href="/report" style={{ color: "#fff", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>Report</Link>
-          {user ? (
-            <>
-              <span style={{ color: "#fff", fontSize: 14 }}>{user.email}</span>
-              <button
-                onClick={async () => {
-                  const supabase = (await import("@/lib/supabase-browser")).createClient();
-                  await supabase.auth.signOut();
-                  localStorage.removeItem("rsd_user");
-                  window.location.href = "/login";
-                }}
-                style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "none", padding: "6px 14px", borderRadius: 6, fontWeight: 600, fontSize: 13, cursor: "pointer" }}
-              >
-                Log Out
-              </button>
-            </>
-          ) : (
-            <Link href="/login" style={{ background: "#60A5FA", color: "#fff", padding: "6px 14px", borderRadius: 6, fontWeight: 700, textDecoration: "none", fontSize: 13 }}>Sign In</Link>
-          )}
-        </nav>
-      </header>
+      <PremiumTopNav variant="dashboard" />
 
       <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px" }}>
+        {/* Export bar — sits at the top, dominant control surface */}
+        <ExportBar
+          accidentCount={
+            selectedHour === "all"
+              ? accidents.length
+              : accidents.filter(
+                  (a) =>
+                    new Date(a.occurredAt).getHours() ===
+                    parseInt(selectedHour)
+                ).length
+          }
+          selectedHour={selectedHour}
+        />
+
         {/* KPI Grid */}
         {stats && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 24 }}>
