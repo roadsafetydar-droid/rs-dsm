@@ -45,15 +45,17 @@ export default function AuthCallbackPage() {
         if (r.ok) {
           const j = await r.json();
           if (j?.user) {
+            // Extract avatar from multiple possible sources
+            const sessionAvatar =
+              (data.session.user.user_metadata as any)?.avatar_url ||
+              (data.session.user.user_metadata as any)?.picture ||
+              (data.session.user.user_metadata as any)?.avatarUrl ||
+              undefined;
             const profileData = {
               email: j.user.email ?? data.session.user.email,
               firstName: j.user.firstName ?? (data.session.user.email?.split("@")[0] || "User"),
               lastName: j.user.lastName ?? "",
-              avatar:
-                j.user.avatar ??
-                (data.session.user.user_metadata as any)?.avatar_url ??
-                (data.session.user.user_metadata as any)?.picture ??
-                undefined,
+              avatar: j.user.avatar ?? sessionAvatar,
               role: j.user.role ?? "community",
               isStaff: !!j.user.isStaff,
               isSuperuser: !!j.user.isSuperuser,
@@ -62,27 +64,40 @@ export default function AuthCallbackPage() {
             window.dispatchEvent(new Event("rsd:user-changed"));
           }
         } else {
-          // Even if /api/me fails, build a minimal profile so dashboard renders
+          // Even if /api/me fails, build a minimal profile so dashboard renders.
+          // Check for known admin emails so they get their role immediately.
+          const userEmail = data.session.user.email || "";
+          const sessionMeta = data.session.user.user_metadata as any;
+          const sessionAvatar =
+            sessionMeta?.avatar_url || sessionMeta?.picture || sessionMeta?.avatarUrl || undefined;
+          const isAdminEmail = userEmail.toLowerCase() === "roadsafetydar@gmail.com";
           const fallback = {
-            email: data.session.user.email,
-            firstName: data.session.user.email?.split("@")[0] || "User",
+            email: userEmail,
+            firstName: userEmail?.split("@")[0] || "User",
             lastName: "",
-            role: "community",
-            isStaff: false,
-            isSuperuser: false,
+            avatar: sessionAvatar,
+            role: isAdminEmail ? "admin" : "community",
+            isStaff: isAdminEmail ? true : false,
+            isSuperuser: isAdminEmail ? true : false,
           };
           localStorage.setItem("rsd_user", JSON.stringify(fallback));
           window.dispatchEvent(new Event("rsd:user-changed"));
         }
       } catch (e) {
         // Same fallback for network errors
+        const userEmail = data.session.user.email || "";
+        const sessionMeta = data.session.user.user_metadata as any;
+        const sessionAvatar =
+          sessionMeta?.avatar_url || sessionMeta?.picture || sessionMeta?.avatarUrl || undefined;
+        const isAdminEmail = userEmail.toLowerCase() === "roadsafetydar@gmail.com";
         const fallback = {
-          email: data.session.user.email,
-          firstName: data.session.user.email?.split("@")[0] || "User",
+          email: userEmail,
+          firstName: userEmail?.split("@")[0] || "User",
           lastName: "",
-          role: "community",
-          isStaff: false,
-          isSuperuser: false,
+          avatar: sessionAvatar,
+          role: isAdminEmail ? "admin" : "community",
+          isStaff: isAdminEmail ? true : false,
+          isSuperuser: isAdminEmail ? true : false,
         };
         localStorage.setItem("rsd_user", JSON.stringify(fallback));
         window.dispatchEvent(new Event("rsd:user-changed"));

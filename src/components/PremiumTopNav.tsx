@@ -33,25 +33,66 @@ export default function PremiumTopNav({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Load user from localStorage on mount + listen for storage events
+  // Load user from localStorage on mount + listen for storage events.
+  // IMPORTANT: Also tries to load the user from the Supabase session if
+  // localStorage is empty. This handles the case where a user signs in via
+  // Google OAuth but the callback page hasn't managed to set localStorage yet,
+  // or the user refreshed the page after a successful sign-in.
   useEffect(() => {
-    function loadUser() {
+    let cancelled = false;
+
+    async function loadUser() {
       try {
+        // First try localStorage
         const stored = localStorage.getItem("rsd_user");
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed?.email) setUser(parsed);
-        } else {
-          setUser(null);
+          if (parsed?.email) {
+            if (!cancelled) setUser(parsed);
+            return;
+          }
         }
+
+        // Fallback: try to get user from Supabase session via /api/me
+        // This ensures Google OAuth users still see their profile even if
+        // localStorage was cleared or the callback page missed setting it.
+        try {
+          const r = await fetch("/api/me", { cache: "no-store" });
+          if (r.ok) {
+            const j = await r.json();
+            if (j?.user?.email) {
+              const profileData = {
+                email: j.user.email,
+                firstName: j.user.firstName || j.user.email.split("@")[0],
+                lastName: j.user.lastName || "",
+                avatar: j.user.avatar || undefined,
+                role: j.user.role || "community",
+                isStaff: j.user.isStaff === true,
+                isSuperuser: j.user.isSuperuser === true,
+                isGuest: false,
+              };
+              // Backfill localStorage so subsequent loads are instant
+              localStorage.setItem("rsd_user", JSON.stringify(profileData));
+              if (!cancelled) setUser(profileData);
+              return;
+            }
+          }
+        } catch {
+          // Network error or API unavailable — silently fall through
+        }
+
+        if (!cancelled) setUser(null);
       } catch {
-        setUser(null);
+        if (!cancelled) setUser(null);
       }
     }
+
     loadUser();
+
     window.addEventListener("storage", loadUser);
     window.addEventListener("rsd:user-changed", loadUser);
     return () => {
+      cancelled = true;
       window.removeEventListener("storage", loadUser);
       window.removeEventListener("rsd:user-changed", loadUser);
     };
