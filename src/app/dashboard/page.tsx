@@ -553,7 +553,7 @@ export default function DashboardPage() {
                         <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 600, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {a.junctionName || "(unnamed junction)"}{a.district ? `, ${a.district}` : ""}
                         </div>
-                        <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
+<div style={{ fontSize: 11, color: "#0F172A", marginTop: 2, background: "rgba(255,255,255,0.75)", padding: "4px 8px", borderRadius: 10, boxShadow: "0 1px 2px rgba(15,23,42,0.06)", border: "1px solid rgba(226,232,240,0.9)" }}>
                           {new Date(a.occurredAt).toLocaleString()}
                           {(() => {
                             const { text } = splitMood(a.description);

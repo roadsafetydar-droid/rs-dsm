@@ -40,8 +40,13 @@ export function ExportBar({
       await runExport(url, format, (filename) => {
         setNotice(`Downloaded ${filename}`);
       });
-    } catch (e) {
-      setNotice("Couldn't generate the export. Try a smaller filter.");
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      if (msg === "empty") {
+        setNotice("No incidents match the current filter.");
+      } else {
+        setNotice(msg);
+      }
       console.error(e);
     } finally {
       setLoading(null);
@@ -67,8 +72,13 @@ export function ExportBar({
         setNotice(`Downloaded ${filename}`);
         setModalOpen(false);
       });
-    } catch (e) {
-      setNotice("Couldn't generate the export. Try a smaller date range.");
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      if (msg === "empty") {
+        setNotice("No incidents match those filters. Try a bigger date range.");
+      } else {
+        setNotice(msg.startsWith("Export") || msg.startsWith("Couldn't") ? msg : `Export failed: ${msg}`);
+      }
       console.error(e);
     } finally {
       setLoading(null);
