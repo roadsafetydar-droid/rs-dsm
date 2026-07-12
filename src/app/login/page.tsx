@@ -32,6 +32,21 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState("");
 
+  // If user is already logged in, bounce them straight to dashboard
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (data.session) {
+          router.replace("/dashboard");
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     setError("");
     setInfo("");

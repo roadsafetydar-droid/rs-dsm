@@ -1,10 +1,10 @@
 // GET /api/accidents/export
 // Returns a filtered slice of accidents for client-side PDF/Excel export.
+// Migrated from Prisma to Supabase PostgREST (SupabaseMigrationRound2).
 // Caps at 5,000 records; sets `truncated: true` if more would have matched.
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 import type { ExportResponse } from "@/lib/export/types";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,6 @@ const VALID_STATUS = new Set(["pending", "verified", "rejected", "all"]);
 
 function parseDate(s: string | null): Date | null {
   if (!s) return null;
-  // Accept YYYY-MM-DD; if anything else slips through, attempt ISO.
   const d = new Date(s);
   if (Number.isNaN(d.getTime())) return null;
   return d;
@@ -62,67 +61,73 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const where: Prisma.AccidentWhereInput = {};
-  if (fromDate || toDate) {
-    where.occurredAt = {};
-    if (fromDate) where.occurredAt.gte = fromDate;
+  const sb = getSupabaseAdmin();
+
+  // Build the Supabase query. We over-fetch by CAP and apply post-filters
+  // for vehicleTypes (JSON string) and the per-vehicle client filter.
+  try {
+    let q = sb
+      .from("Accident")
+      .select(
+        "id, lat, lng, district, ward, junctionName, occurredAt, reportedAt, severity, vehicleTypes, reporterType, casualties, fatalities, injuries, description, weather, roadCondition, contact, photoUrl, verificationStatus, verified, upvoteCount"
+      )
+      .order("occurredAt", { ascending: false })
+      .limit(CAP);
+
+    if (fromDate) q = q.gte("occurredAt", fromDate.toISOString());
     if (toDate) {
-      // Inclusive end-of-day
       const end = new Date(toDate);
       end.setHours(23, 59, 59, 999);
-      where.occurredAt.lte = end;
+      q = q.lte("occurredAt", end.toISOString());
     }
-  }
-  if (district) where.district = district;
-  if (severities.length) where.severity = { in: severities };
-  if (status !== "all") where.verificationStatus = status;
-  // Note: vehicleTypes is a JSON string — filtered client-side after fetch
-  // to keep the Prisma where simple and the query plan safe.
+    if (district) q = q.eq("district", district);
+    if (severities.length) q = q.in("severity", severities);
+    if (status !== "all") q = q.eq("verificationStatus", status);
 
-  try {
-    const [total, rows] = await Promise.all([
-      prisma.accident.count({ where }),
-      prisma.accident.findMany({
-        where,
-        orderBy: { occurredAt: "desc" },
-        take: CAP,
-        select: {
-          id: true,
-          lat: true,
-          lng: true,
-          district: true,
-          ward: true,
-          junctionName: true,
-          occurredAt: true,
-          reportedAt: true,
-          severity: true,
-          vehicleTypes: true,
-          reporterType: true,
-          casualties: true,
-          fatalities: true,
-          injuries: true,
-          description: true,
-          weather: true,
-          roadCondition: true,
-          contact: true,
-          photoUrl: true,
-          verificationStatus: true,
-          verified: true,
-          upvoteCount: true,
-        },
-      }),
-    ]);
+    // For "total" we do a count with the same filters
+    let countQuery = sb
+      .from("Accident")
+      .select("id", { count: "exact", head: true });
+    if (fromDate) countQuery = countQuery.gte("occurredAt", fromDate.toISOString());
+    if (toDate) {
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      countQuery = countQuery.lte("occurredAt", end.toISOString());
+    }
+    if (district) countQuery = countQuery.eq("district", district);
+    if (severities.length) countQuery = countQuery.in("severity", severities);
+    if (status !== "all") countQuery = countQuery.eq("verificationStatus", status);
 
-    // Filter by vehicle client-side (JSON column).
-    let incidents = rows.map((a) => ({
+    const [{ data: rows, error: rowsErr }, { count: total, error: countErr }] =
+      await Promise.all([q, countQuery]);
+
+    if (rowsErr) {
+      console.error("[export] supabase rows error:", rowsErr.message);
+      return NextResponse.json(
+        { error: "Export query failed", detail: rowsErr.message },
+        { status: 500 }
+      );
+    }
+    if (countErr) {
+      console.error("[export] supabase count error:", countErr.message);
+    }
+
+    // Map + parse vehicleTypes
+    let incidents = (rows ?? []).map((a: any) => ({
       id: a.id,
       lat: a.lat,
       lng: a.lng,
       district: a.district,
       ward: a.ward,
       junctionName: a.junctionName,
-      occurredAt: a.occurredAt.toISOString(),
-      reportedAt: a.reportedAt.toISOString(),
+      occurredAt:
+        typeof a.occurredAt === "string"
+          ? a.occurredAt
+          : new Date(a.occurredAt).toISOString(),
+      reportedAt:
+        typeof a.reportedAt === "string"
+          ? a.reportedAt
+          : new Date(a.reportedAt).toISOString(),
       severity: a.severity,
       vehicleTypes: safeParseArray(a.vehicleTypes),
       reporterType: a.reporterType,
@@ -139,13 +144,14 @@ export async function GET(request: NextRequest) {
       upvoteCount: a.upvoteCount,
     }));
 
+    // vehicleTypes is a JSON string — filter client-side after fetch
     if (vehicles.length) {
       incidents = incidents.filter((a) =>
-        a.vehicleTypes.some((v) => vehicles.includes(v))
+        a.vehicleTypes.some((v: string) => vehicles.includes(v))
       );
     }
 
-    const truncated = total > incidents.length;
+    const truncated = (total ?? 0) > incidents.length;
 
     const body: ExportResponse = {
       filters: {
@@ -157,17 +163,17 @@ export async function GET(request: NextRequest) {
         status: status as ExportResponse["filters"]["status"],
       },
       count: incidents.length,
-      total,
+      total: total ?? incidents.length,
       truncated,
       generatedAt: new Date().toISOString(),
       incidents,
     };
 
     return NextResponse.json(body);
-  } catch (err) {
+  } catch (err: any) {
     console.error("[export] failed:", err);
     return NextResponse.json(
-      { error: "Export query failed" },
+      { error: "Export query failed", detail: err?.message || String(err) },
       { status: 500 }
     );
   }

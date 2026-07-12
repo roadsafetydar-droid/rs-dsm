@@ -8,8 +8,9 @@ export const runtime = "nodejs";
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Protected routes
-  const protectedPaths = ["/dashboard", "/report", "/editor", "/authority"];
+  // Protected routes — /report is PUBLIC for community reporting
+  // (anyone can report an accident, contact info captured in the form itself)
+  const protectedPaths = ["/dashboard", "/editor", "/authority"];
   const isProtected = protectedPaths.some((p) => path.startsWith(p));
 
   // Guest cookie bypass — localStorage rsd_user has isGuest=true and we mirror via cookie

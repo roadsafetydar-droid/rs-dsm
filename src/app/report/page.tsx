@@ -34,6 +34,7 @@ export default function ReportPage() {
     weather: "",
     roadCondition: "",
     contact: "",
+    mood: "" as "" | "sad" | "tragic" | "hopeful" | "miraculous",
   });
 
   const [submitted, setSubmitted] = useState(false);
@@ -122,8 +123,17 @@ export default function ReportPage() {
     e.preventDefault();
     setLoading(true);
 
+    // Prepend a machine-parseable mood tag to the description.
+    // Stored inline so it ships today without a DB migration;
+    // future work can extract it into a dedicated `mood` column.
+    const baseDescription = (form.description || "").trim();
+    const descriptionWithMood = form.mood
+      ? `[mood:${form.mood}] ${baseDescription}`.trim()
+      : baseDescription;
+
     const payload = {
       ...form,
+      description: descriptionWithMood,
       photoUrl,
       occurredAt: new Date().toISOString(),
       district: selectedDistrict,
@@ -289,6 +299,59 @@ export default function ReportPage() {
             {/* Description */}
             <div style={{ marginBottom: 32 }}>
               <h4 style={{ fontSize: 14, fontWeight: 600, color: "#475569", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 16 }}>Description</h4>
+
+              {/* "How it feels" — mood picker (helps the community respond with empathy) */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+                  How did it feel? <span style={{ fontSize: 12, fontWeight: 400, color: "#94A3B8" }}>(optional)</span>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {([
+                    { key: "sad",        emoji: "😔", label: "Sad",        color: "#3B82F6", tip: "Hard to watch — people were hurt, no lives lost" },
+                    { key: "tragic",     emoji: "💔", label: "Tragic",     color: "#DC2626", tip: "Loss of life or devastating damage" },
+                    { key: "hopeful",    emoji: "🤝", label: "Hopeful",    color: "#22C55E", tip: "Bystanders helped, emergency arrived fast" },
+                    { key: "miraculous", emoji: "✨", label: "Miraculous", color: "#A855F7", tip: "Survived something that should have been worse" },
+                  ] as const).map((m) => {
+                    const active = form.mood === m.key;
+                    return (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, mood: active ? "" : m.key }))}
+                        title={m.tip}
+                        aria-pressed={active}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "10px 14px",
+                          minHeight: 44,
+                          borderRadius: 999,
+                          border: `2px solid ${active ? m.color : "#E2E8F0"}`,
+                          background: active ? `${m.color}15` : "#fff",
+                          color: active ? m.color : "#475569",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "all 0.12s ease",
+                        }}
+                      >
+                        <span aria-hidden style={{ fontSize: 18 }}>{m.emoji}</span>
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {form.mood && (
+                  <div style={{ fontSize: 12, color: "#64748B", marginTop: 6, fontStyle: "italic" }}>
+                    {form.mood === "sad" && "You're marking this as emotionally difficult to witness."}
+                    {form.mood === "tragic" && "You're marking this as involving loss of life or severe harm."}
+                    {form.mood === "hopeful" && "You're marking this as having a positive human response."}
+                    {form.mood === "miraculous" && "You're marking this as a story of unexpected survival."}
+                  </div>
+                )}
+              </div>
+
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
