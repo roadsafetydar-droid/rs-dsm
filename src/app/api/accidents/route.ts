@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
   const fatalities = Number(body.fatalities ?? 0) || 0;
   const injuries = Number(body.injuries ?? 0) || 0;
 
-  const description = body.description ? String(body.description).trim() : null;
+  const description = body.description ? String(body.description).trim() : "";
   // The form allows blank weather/roadCondition/photoUrl/contact; the DB columns
   // are NOT NULL, so substitute empty strings instead of NULL.
   const weather = body.weather ? String(body.weather).trim() : "";

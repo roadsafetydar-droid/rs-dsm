@@ -1,7 +1,62 @@
 import Link from "next/link";
 import PremiumTopNav from "@/components/PremiumTopNav";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+interface Hotspot {
+  area: string;
+  reports: number;
+  severity: string;
+  color: string;
+}
+
+async function getStats() {
+  const sb = getSupabaseAdmin();
+  const [accidentsRes, junctionsRes, verifiedRes] = await Promise.all([
+    sb.from("Accident").select("id, severity, vehicleTypes, district, ward, fatalities, casualties, verificationStatus, verified, occurredAt"),
+    sb.from("Junction").select("id", { count: "exact", head: true }),
+    sb.from("Accident").select("id", { count: "exact", head: true }).eq("verificationStatus", "verified"),
+  ]);
+  const rows = accidentsRes.data ?? [];
+  const junctionCount = junctionsRes.count ?? 0;
+  const verifiedCount = verifiedRes.count ?? 0;
+  const total = rows.length;
+  const severity: Record<string, number> = {};
+  const districtCount: Record<string, { count: number; fatal: number }> = {};
+  let fatalCount = 0;
+  for (const a of rows) {
+    severity[a.severity] = (severity[a.severity] || 0) + 1;
+    if (a.severity === "fatal") fatalCount++;
+    const d = a.district || "Unknown";
+    if (!districtCount[d]) districtCount[d] = { count: 0, fatal: 0 };
+    districtCount[d].count++;
+    if (a.severity === "fatal") districtCount[d].fatal++;
+  }
+  const totalFatal = severity.fatal || 0;
+  const totalSerious = severity.serious || 0;
+  const totalCritical = severity.critical || 0;
+  const totalMinor = severity.minor || 0;
+  const totalFatalities = rows.reduce((s, a) => s + (a.fatalities || 0), 0);
+  const totalCasualties = rows.reduce((s, a) => s + (a.casualties || 0), 0);
+  const verifiedPercent = total > 0 ? Math.round((verifiedCount / total) * 100) : 0;
+  const fatalPercent = total > 0 ? Math.round((totalFatal / total) * 100) : 0;
+  const seriousPercent = total > 0 ? Math.round((totalSerious / total) * 100) : 0;
+  const criticalPercent = total > 0 ? Math.round((totalCritical / total) * 100) : 0;
+  const minorPercent = total > 0 ? Math.round((totalMinor / total) * 100) : 0;
+  const top5: Hotspot[] = rows.reduce<Hotspot[]>((acc, a) => {
+    const key = a.ward || a.district || "Unknown";
+    const existing = acc.find((h) => h.area === key);
+    if (existing) { existing.reports++; }
+    else { acc.push({ area: key, reports: 1, severity: a.severity, color: a.severity === "fatal" || a.severity === "critical" ? "#F87171" : a.severity === "serious" ? "#FBBF24" : "#3B82F6" }); }
+    return acc;
+  }, []).sort((a, b) => b.reports - a.reports).slice(0, 5);
+  const formatNum = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K+` : `${n}+`;
+  return { total, verifiedCount, junctionCount, verifiedPercent, totalFatal, totalSerious, totalCritical, totalMinor, fatalPercent, seriousPercent, criticalPercent, minorPercent, totalFatalities, totalCasualties, top5, formatNum };
+}
+
+export default async function Home() {
+  const stats = await getStats();
   return (
     <>
       <PremiumTopNav variant="default" />
@@ -28,13 +83,13 @@ export default function Home() {
           </div>
         </section>
 
-        {/* KPI Grid */}
+        {/* KPI Grid — live from Supabase */}
         <div className="kpi-grid">
           {[
-            { num: "1,200+", label: "Total Reports", color: "#F87171", border: "#F87171" },
-            { num: "850+", label: "Verified Reports", color: "#22C55E", border: "#22C55E" },
-            { num: "60+", label: "Tracked Junctions", color: "#3B82F6", border: "#3B82F6" },
-            { num: "40%", label: "Police Verified", color: "#FBBF24", border: "#FBBF24" },
+            { num: stats.formatNum(stats.total), label: "Total Reports", color: "#F87171", border: "#F87171" },
+            { num: stats.formatNum(stats.verifiedCount), label: "Verified Reports", color: "#22C55E", border: "#22C55E" },
+            { num: stats.formatNum(stats.junctionCount), label: "Tracked Junctions", color: "#3B82F6", border: "#3B82F6" },
+            { num: `${stats.verifiedPercent}%`, label: "Police Verified", color: "#FBBF24", border: "#FBBF24" },
           ].map((kpi) => (
             <div key={kpi.label} className="kpi-card" style={{ borderTop: `3px solid ${kpi.border}` }}>
               <div className="kpi-value" style={{ color: kpi.color }}>{kpi.num}</div>
@@ -48,17 +103,17 @@ export default function Home() {
           <Link href="/dashboard/" className="btn-secondary">View Hotspot Map</Link>
           <Link href="/login" className="btn-ghost">Sign In</Link>
           <span style={{ marginLeft: "auto", fontSize: 14, color: "#475569", fontWeight: 500 }}>
-            ⚡ Citizen-powered · 850+ verified reports
+            ⚡ Citizen-powered · {stats.formatNum(stats.verifiedCount)} verified reports
           </span>
         </div>
 
-        {/* Featured Stat Cards */}
+        {/* Featured Stat Cards — live from Supabase */}
         <div className="featured-stat-grid">
           {[
-            { label: "Total Reports", sublabel: "Crowdsourced + official", value: "1,200+", icon: "/add-report.png", gradient: "linear-gradient(135deg, #DBEAFE, #FFFFFF)", color: "#3B82F6" },
-            { label: "Fatal Accidents", sublabel: "Since Jan 2024", value: "45", icon: "/stone-hazard.png", gradient: "linear-gradient(135deg, #FEE2E2, #FFFFFF)", color: "#F87171" },
-            { label: "Tracked Junctions", sublabel: "Across 5 districts", value: "60+", icon: "/map-icon.png", gradient: "linear-gradient(135deg, #FEF3C7, #FFFFFF)", color: "#D97706" },
-            { label: "Police Verified", sublabel: "Official records", value: "850+", icon: "/fingerprint-icon.png", gradient: "linear-gradient(135deg, #DCFCE7, #FFFFFF)", color: "#16A34A" },
+            { label: "Total Reports", sublabel: "Crowdsourced + official", value: stats.formatNum(stats.total), icon: "/add-report.png", gradient: "linear-gradient(135deg, #DBEAFE, #FFFFFF)", color: "#3B82F6" },
+            { label: "Fatal Accidents", sublabel: `${stats.totalFatalities} lives lost`, value: `${stats.totalFatal}`, icon: "/stone-hazard.png", gradient: "linear-gradient(135deg, #FEE2E2, #FFFFFF)", color: "#F87171" },
+            { label: "Tracked Junctions", sublabel: "Across 5 districts", value: stats.formatNum(stats.junctionCount), icon: "/map-icon.png", gradient: "linear-gradient(135deg, #FEF3C7, #FFFFFF)", color: "#D97706" },
+            { label: "Police Verified", sublabel: `${stats.verifiedPercent}% of all reports`, value: stats.formatNum(stats.verifiedCount), icon: "/fingerprint-icon.png", gradient: "linear-gradient(135deg, #DCFCE7, #FFFFFF)", color: "#16A34A" },
           ].map((card) => (
             <div key={card.label} className="featured-stat-card" style={{ background: card.gradient }}>
               <img src={card.icon} alt="" style={{ width: 44, height: 44, objectFit: "contain", opacity: 0.7, marginBottom: 8 }} />
@@ -107,19 +162,17 @@ export default function Home() {
               <span style={{ marginLeft: "auto", fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>Last 30 days</span>
             </div>
             <div className="report-cta-hotspot-list">
-              {[
-                { rank: 1, area: "Kariakoo — Bibi Titi", reports: 24, severity: "Critical", color: "#F87171" },
-                { rank: 2, area: "Ubungo Junction", reports: 19, severity: "Critical", color: "#F87171" },
-                { rank: 3, area: "Mwenge — Bagamoyo Rd", reports: 17, severity: "High", color: "#FBBF24" },
-                { rank: 4, area: "Kivukoni Front", reports: 14, severity: "High", color: "#FBBF24" },
-                { rank: 5, area: "Mbagala Roundabout", reports: 11, severity: "Medium", color: "#3B82F6" },
-              ].map((h) => (
-                <div key={h.rank} className="report-cta-hotspot-row">
-                  <div className="report-cta-hotspot-rank" style={{ background: h.color }}>{h.rank}</div>
+              {stats.top5.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 24, color: "#94A3B8", fontSize: 14 }}>
+                  No accident data yet. Be the first to <Link href="/report" style={{ color: "#3B82F6" }}>report</Link>.
+                </div>
+              ) : stats.top5.map((h, i) => (
+                <div key={h.area} className="report-cta-hotspot-row">
+                  <div className="report-cta-hotspot-rank" style={{ background: h.color }}>{i + 1}</div>
                   <div className="report-cta-hotspot-meta">
                     <div className="report-cta-hotspot-name">{h.area}</div>
                     <div className="report-cta-hotspot-stats">
-                      <span style={{ color: h.color, fontWeight: 700 }}>{h.severity}</span>
+                      <span style={{ color: h.color, fontWeight: 700 }}>{h.severity === "fatal" || h.severity === "critical" ? "Critical" : h.severity === "serious" ? "High" : "Medium"}</span>
                       <span style={{ color: "#94A3B8" }}>·</span>
                       <span>{h.reports} reports</span>
                     </div>
@@ -140,10 +193,10 @@ export default function Home() {
             <h3>Severity Distribution</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {[
-                { label: "Fatal", value: 15, color: "#F87171" },
-                { label: "Critical", value: 25, color: "#FBBF24" },
-                { label: "Serious", value: 35, color: "#3B82F6" },
-                { label: "Minor", value: 25, color: "#22C55E" },
+                { label: "Fatal", value: stats.fatalPercent, color: "#F87171" },
+                { label: "Critical", value: stats.criticalPercent, color: "#FBBF24" },
+                { label: "Serious", value: stats.seriousPercent, color: "#3B82F6" },
+                { label: "Minor", value: stats.minorPercent, color: "#22C55E" },
               ].map((s) => (
                 <div key={s.label}>
                   <div className="severity-bar-header">
