@@ -7,6 +7,7 @@
 // page permission check for Google OAuth users.
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
@@ -40,8 +41,30 @@ export async function GET(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const userEmail = user.email?.toLowerCase() ?? "";
 
+    /**
+     * Helper: sync role to Supabase app_metadata so middleware can
+     * read it without a DB query (fast path like Firebase custom claims).
+     */
+    async function syncAppMetadataRole(uid: string, role: string) {
+      try {
+        const adminAuth = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_KEY!,
+          { auth: { persistSession: false, autoRefreshToken: false } }
+        );
+        await adminAuth.auth.admin.updateUserById(uid, {
+          app_metadata: { role },
+        });
+      } catch {
+        // Non-fatal
+      }
+    }
+
     // Check if this is a hardcoded admin
     if (ADMIN_EMAILS.includes(userEmail)) {
+      // Sync role to app_metadata so middleware sees it instantly
+      await syncAppMetadataRole(user.id, "admin");
+
       // Return admin flags even if no DB record exists
       return NextResponse.json({
         supabaseUser: {

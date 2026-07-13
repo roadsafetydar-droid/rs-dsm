@@ -115,6 +115,32 @@ export default function DashboardPage() {
     error?: string;
     lang: "en" | "sw";
   }>({ text: "", loading: true, lang: "en" });
+  const [roleSyncStatus, setRoleSyncStatus] = useState<{ loading: boolean; message?: string; error?: string }>({ loading: false });
+
+  // Fix role button: syncs user's role to app_metadata
+  const handleFixRole = useCallback(async () => {
+    setRoleSyncStatus({ loading: true });
+    try {
+      const res = await fetch("/api/auth/sync-role", { method: "POST" });
+      const data = await res.json();
+      if (data.ok) {
+        setRoleSyncStatus({ loading: false, message: `✅ Role: ${data.role}` });
+        // Refresh user data
+        const stored = localStorage.getItem("rsd_user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          parsed.role = data.role;
+          localStorage.setItem("rsd_user", JSON.stringify(parsed));
+          window.dispatchEvent(new Event("rsd:user-changed"));
+        }
+      } else {
+        setRoleSyncStatus({ loading: false, error: data.error || "Failed" });
+      }
+    } catch (err: any) {
+      setRoleSyncStatus({ loading: false, error: err?.message || "Network error" });
+    }
+    setTimeout(() => setRoleSyncStatus({ loading: false }), 5000);
+  }, []);
 
   // Fetch AI safety summary once on mount.
   const fetchAiSummary = (lang: "en" | "sw" = "en") => {

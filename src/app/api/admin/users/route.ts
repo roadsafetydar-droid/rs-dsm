@@ -4,6 +4,7 @@
 // Requires superuser (isSuperuser === true) access.
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
@@ -107,6 +108,29 @@ export async function POST(request: NextRequest) {
       // Also update User.isStaff if role is editor or admin
       const isStaffFlag = role === "editor" || role === "admin";
       await admin.from("User").update({ isStaff: isStaffFlag }).eq("id", userId);
+
+      // Sync role to Supabase app_metadata for immediate effect (no delay waiting for DB trigger)
+      try {
+        const { data: profileWithUid } = await admin
+          .from("UserProfile")
+          .select("supabaseUid")
+          .eq("userId", userId)
+          .maybeSingle();
+
+        if (profileWithUid?.supabaseUid) {
+          const adminAuth = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_KEY!,
+            { auth: { persistSession: false, autoRefreshToken: false } }
+          );
+          await adminAuth.auth.admin.updateUserById(profileWithUid.supabaseUid, {
+            app_metadata: { role },
+          });
+        }
+      } catch (metaErr) {
+        console.warn("[admin/users] Failed to sync app_metadata:", metaErr);
+        // Non-fatal — the DB trigger will sync on the next UserProfile update
+      }
 
       return NextResponse.json({ success: true, message: `Role updated to ${role}` });
     }

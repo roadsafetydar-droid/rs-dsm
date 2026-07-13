@@ -19,6 +19,10 @@ const ROUTE_GUARDS: RouteGuard[] = [
   { path: "/researcher", allowedRoles: ["researcher"], redirect: "/dashboard" },
 ];
 
+/**
+ * Get the user's role, checking app_metadata FIRST (fast path),
+ * then falling back to the UserProfile DB query.
+ */
 async function getUserRoleFromSession(request: NextRequest): Promise<string | null> {
   const guest = request.cookies.get("rsd_guest")?.value === "1";
   if (guest) return "guest";
@@ -36,6 +40,14 @@ async function getUserRoleFromSession(request: NextRequest): Promise<string | nu
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+    // FAST PATH: Read role directly from app_metadata (like Firebase custom claims)
+    // This is set by the DB trigger on UserProfile updates.
+    const appRole = user.app_metadata?.role as string | undefined;
+    if (appRole && ["community", "police", "tanroads", "researcher", "admin", "editor"].includes(appRole)) {
+      return appRole;
+    }
+
+    // FALLBACK: Query UserProfile table (for backwards compatibility)
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin
       .from("UserProfile")
@@ -45,6 +57,7 @@ async function getUserRoleFromSession(request: NextRequest): Promise<string | nu
 
     if (profile) return (profile as any).role;
 
+    // SECOND FALLBACK: Check the legacy User table (Django migration)
     if (user.email) {
       const { data: userMatch } = await admin
         .from("User")

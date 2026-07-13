@@ -396,6 +396,43 @@ export default function PremiumTopNav({
                     >
                       👤 My Profile
                     </Link>
+                    {!user.isGuest && (
+                      <button
+                        onClick={async () => {
+                          setUserMenuOpen(false);
+                          try {
+                            const res = await fetch("/api/auth/sync-role", { method: "POST" });
+                            const data = await res.json();
+                            if (data.ok) {
+                              // Refresh user data in localStorage
+                              const stored = localStorage.getItem("rsd_user");
+                              if (stored) {
+                                const parsed = JSON.parse(stored);
+                                parsed.role = data.role;
+                                localStorage.setItem("rsd_user", JSON.stringify(parsed));
+                                window.dispatchEvent(new Event("rsd:user-changed"));
+                              }
+                              router.refresh();
+                            }
+                          } catch {}
+                        }}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "10px 16px",
+                          background: "none",
+                          border: "none",
+                          borderBottom: "1px solid #F1F5F9",
+                          color: "#3B82F6",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🔄 Fix My Role
+                      </button>
+                    )}
                     {user.isStaff && !user.isGuest && (
                       <Link
                         href="/editor"

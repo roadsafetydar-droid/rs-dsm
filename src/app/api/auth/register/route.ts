@@ -97,6 +97,22 @@ export async function POST(request: NextRequest) {
     const supabaseUserId = signUp.user.id;
     const admin = getSupabaseAdmin();
 
+    // Set role in app_metadata immediately (like Firebase custom claims)
+    // This ensures middleware can read the role without a DB query.
+    try {
+      const adminAuth = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_KEY!,
+        { auth: { persistSession: false, autoRefreshToken: false } }
+      );
+      await adminAuth.auth.admin.updateUserById(supabaseUserId, {
+        app_metadata: { role: requestedRole },
+      });
+    } catch (metaErr) {
+      console.warn("[register] Failed to set app_metadata:", metaErr);
+      // Non-fatal — the DB trigger will sync it later
+    }
+
     let cleanUsername = requestedUsername;
     for (let attempt = 0; attempt < 5; attempt++) {
       const { data: existingUsername } = await admin

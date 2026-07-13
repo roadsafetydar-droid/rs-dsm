@@ -39,6 +39,13 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      // Sync role to app_metadata for middleware fast path
+      try {
+        await fetch("/api/auth/sync-role", { method: "POST" });
+      } catch {
+        // Non-fatal
+      }
+
       // Fetch profile data and stash it for the dashboard
       try {
         const r = await fetch("/api/me", { cache: "no-store" });
