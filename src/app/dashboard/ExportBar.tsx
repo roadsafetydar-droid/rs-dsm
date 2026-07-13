@@ -146,8 +146,10 @@ export function ExportBar({
             : "Download the current view as PDF"
         }
         style={btnStyle("#0F172A", disabled)}
+        className="rsd-export-btn-mobile"
       >
-        {loading === "pdf-quick" ? "Generating PDF…" : "PDF (this view)"}
+        <span className="rsd-export-icon">📄</span>
+        <span className="rsd-export-label">{loading === "pdf-quick" ? "Gen…" : "PDF"}</span>
       </button>
 
       <button
@@ -160,8 +162,10 @@ export function ExportBar({
             : "Download the current view as Excel"
         }
         style={btnStyle("#1E3A5F", disabled, true)}
+        className="rsd-export-btn-mobile"
       >
-        {loading === "xlsx-quick" ? "Building workbook…" : "Excel (this view)"}
+        <span className="rsd-export-icon">📊</span>
+        <span className="rsd-export-label">{loading === "xlsx-quick" ? "Build…" : "Excel"}</span>
       </button>
 
       <button
@@ -169,8 +173,10 @@ export function ExportBar({
         onClick={() => setModalOpen(true)}
         disabled={loading !== null}
         style={btnStyle("#2563EB", false, true, true)}
+        className="rsd-export-btn-mobile"
       >
-        Custom export…
+        <span className="rsd-export-icon">⚙️</span>
+        <span className="rsd-export-label">Custom</span>
       </button>
 
       {modalOpen && (
@@ -183,8 +189,10 @@ export function ExportBar({
 
       <style>{`
         @media (max-width: 768px) {
-          .rsd-export-bar { flex-wrap: wrap; gap: 8px !important; }
-          .rsd-export-bar button { flex: 1; min-width: 0; text-align: center; padding: 8px 10px !important; font-size: 12px !important; }
+          .rsd-export-bar { flex-wrap: wrap; gap: 6px !important; padding: 8px 10px !important; }
+          .rsd-export-bar button { flex: 1; min-width: 0; text-align: center; padding: 8px 6px !important; font-size: 11px !important; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 2px !important; }
+          .rsd-export-icon { font-size: 16px !important; }
+          .rsd-export-label { font-size: 9px !important; white-space: nowrap; }
           .rsd-export-spacer { display: none !important; }
         }
       `}</style>
