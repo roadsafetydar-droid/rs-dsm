@@ -5,6 +5,10 @@ import Link from "next/link";
 import PremiumTopNav from "@/components/PremiumTopNav";
 import { ExportBar } from "./ExportBar";
 import { createClient } from "@/lib/supabase-browser";
+import CountUp from "@/components/CountUp";
+import ScrollReveal from "@/components/ScrollReveal";
+import LoadingScreen from "@/components/LoadingScreen";
+import Footer from "@/components/Footer";
 
 interface Accident {
   id: number;
@@ -285,12 +289,17 @@ export default function DashboardPage() {
     });
   }, [accidents, selectedHour, seriousMode]);
 
+  const [loadingComplete, setLoadingComplete] = useState(false);
   const sevColors: Record<string, string> = {
     fatal: "#F87171",
     critical: "#FBBF24",
     serious: "#3B82F6",
     minor: "#22C55E",
   };
+
+  if (!loadingComplete) {
+    return <LoadingScreen onComplete={() => setLoadingComplete(true)} />;
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", flexDirection: "column" }}>
@@ -377,23 +386,52 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* KPI Grid */}
+        {/* KPI Grid with Count-up animations */}
         {stats && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 24 }}>
-            {[
-              { label: "Total Reports", value: stats.total, color: "#F87171" },
-              { label: "Verified", value: stats.verified, color: "#22C55E" },
-              { label: "Fatal", value: stats.fatal, color: "#F87171" },
-              { label: "Critical", value: stats.critical, color: "#FBBF24" },
-              { label: "Serious", value: stats.serious, color: "#3B82F6" },
-              { label: "Junctions", value: stats.junctionCount, color: "#A855F7" },
-            ].map((kpi) => (
-              <div key={kpi.label} style={{ background: "#fff", padding: "16px", borderRadius: 16, border: "1px solid #E2E8F0", borderTop: `3px solid ${kpi.color}`, textAlign: "center" }}>
-                <div style={{ fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 28, fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
-                <div style={{ fontSize: 13, color: "#475569", fontWeight: 600, marginTop: 4 }}>{kpi.label}</div>
-              </div>
-            ))}
-          </div>
+          <ScrollReveal>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 24 }}>
+              {[
+                { label: "Total Reports", value: stats.total, color: "#F87171", icon: "📊" },
+                { label: "Verified", value: stats.verified, color: "#22C55E", icon: "✓" },
+                { label: "Fatal", value: stats.fatal, color: "#DC2626", icon: "💔" },
+                { label: "Critical", value: stats.critical, color: "#FBBF24", icon: "⚠️" },
+                { label: "Serious", value: stats.serious, color: "#3B82F6", icon: "🏥" },
+                { label: "Junctions", value: stats.junctionCount, color: "#A855F7", icon: "📍" },
+              ].map((kpi) => (
+                <div key={kpi.label} style={{
+                  background: "#fff",
+                  padding: "20px 16px",
+                  borderRadius: 16,
+                  border: "1px solid #E2E8F0",
+                  borderTop: `3px solid ${kpi.color}`,
+                  textAlign: "center",
+                  transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s",
+                  cursor: "default",
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 12px 32px rgba(15,23,42,0.08)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div style={{ fontSize: 24, marginBottom: 4 }}>{kpi.icon}</div>
+                  <CountUp
+                    end={kpi.value}
+                    style={{
+                      fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif',
+                      fontSize: 32,
+                      fontWeight: 800,
+                      color: kpi.color,
+                    }}
+                  />
+                  <div style={{ fontSize: 13, color: "#475569", fontWeight: 600, marginTop: 4 }}>{kpi.label}</div>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
         )}
 
         {/* Map controls */}
@@ -602,39 +640,41 @@ export default function DashboardPage() {
 
         {/* Charts */}
         {stats && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
-            {/* Severity */}
-            <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0" }}>
-              <h3 style={{ margin: "0 0 16px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Severity Distribution</h3>
-              {Object.entries(stats.severity).map(([sev, count]) => (
-                <div key={sev} style={{ marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569", marginBottom: 2 }}>
-                    <span>{sev.charAt(0).toUpperCase() + sev.slice(1)}</span>
-                    <span style={{ fontWeight: 700 }}>{count}</span>
+          <ScrollReveal>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+              {/* Severity */}
+              <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0" }}>
+                <h3 style={{ margin: "0 0 16px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Severity Distribution</h3>
+                {Object.entries(stats.severity).map(([sev, count]) => (
+                  <div key={sev} style={{ marginBottom: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569", marginBottom: 2 }}>
+                      <span>{sev.charAt(0).toUpperCase() + sev.slice(1)}</span>
+                      <span style={{ fontWeight: 700 }}>{count}</span>
+                    </div>
+                    <div style={{ height: 8, background: "#E2E8F0", borderRadius: 999 }}>
+                      <div style={{ width: `${(count / stats.total) * 100}%`, height: "100%", background: sevColors[sev] || "#3B82F6", borderRadius: 999 }} />
+                    </div>
                   </div>
-                  <div style={{ height: 8, background: "#E2E8F0", borderRadius: 999 }}>
-                    <div style={{ width: `${(count / stats.total) * 100}%`, height: "100%", background: sevColors[sev] || "#3B82F6", borderRadius: 999 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Vehicle Types */}
-            <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0" }}>
-              <h3 style={{ margin: "0 0 16px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Vehicle Types</h3>
-              {Object.entries(stats.vehicles).map(([v, count]) => (
-                <div key={v} style={{ marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569", marginBottom: 2 }}>
-                    <span>{v}</span>
-                    <span style={{ fontWeight: 700 }}>{count}</span>
+              {/* Vehicle Types */}
+              <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0" }}>
+                <h3 style={{ margin: "0 0 16px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Vehicle Types</h3>
+                {Object.entries(stats.vehicles).map(([v, count]) => (
+                  <div key={v} style={{ marginBottom: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569", marginBottom: 2 }}>
+                      <span>{v}</span>
+                      <span style={{ fontWeight: 700 }}>{count}</span>
+                    </div>
+                    <div style={{ height: 8, background: "#E2E8F0", borderRadius: 999 }}>
+                      <div style={{ width: `${(count / stats.total) * 100}%`, height: "100%", background: "#A855F7", borderRadius: 999 }} />
+                    </div>
                   </div>
-                  <div style={{ height: 8, background: "#E2E8F0", borderRadius: 999 }}>
-                    <div style={{ width: `${(count / stats.total) * 100}%`, height: "100%", background: "#A855F7", borderRadius: 999 }} />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </ScrollReveal>
         )}
 
         <style>{`
@@ -644,6 +684,7 @@ export default function DashboardPage() {
           }
         `}</style>
       </main>
+      <Footer />
     </div>
   );
 }
