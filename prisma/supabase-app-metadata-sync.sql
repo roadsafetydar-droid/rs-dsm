@@ -3,14 +3,16 @@
 -- ============================================================
 -- Hii script inahakikisha kuwa kila user anapopata role update
 -- (kutoka kwenye UserProfile table), role yake inasawazishwa
--- moja kwa moja kwenye auth.users.raw_app_metadata.
+-- moja kwa moja kwenye auth.users.raw_app_meta_data.
 --
 -- Hii inafanya kazi kama Firebase Custom Claims — middleware
 -- inaweza kusoma role moja kwa moja kutoka kwa Supabase Auth
 -- bila kuuliza DB tena.
+--
+-- IMPORTANT: Jina la column ni raw_app_meta_data (sio raw_app_metadata)
 -- ============================================================
 
--- 1. Function: sync profile role to auth.users.raw_app_metadata
+-- 1. Function: sync profile role to auth.users.raw_app_meta_data
 CREATE OR REPLACE FUNCTION public.sync_role_to_app_metadata()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -23,11 +25,11 @@ BEGIN
   -- Get the supabaseUid from the UserProfile
   v_supabase_uid := NEW."supabaseUid"::uuid;
 
-  -- If supabaseUid is set, update the auth.users raw_app_metadata
+  -- If supabaseUid is set, update the auth.users raw_app_meta_data
   IF v_supabase_uid IS NOT NULL THEN
     UPDATE auth.users
-    SET raw_app_metadata = 
-        raw_app_metadata || jsonb_build_object('role', NEW.role)
+    SET raw_app_meta_data = 
+        raw_app_meta_data || jsonb_build_object('role', NEW.role)
     WHERE id = v_supabase_uid;
   END IF;
 
@@ -45,7 +47,7 @@ CREATE TRIGGER trg_sync_role_to_app_metadata
 
 -- ============================================================
 -- 3. Backfill: Sync existing users who have profiles but no
---    app_metadata.role set yet.
+--    app_meta_data.role set yet.
 -- ============================================================
 DO $$
 DECLARE
@@ -57,28 +59,28 @@ BEGIN
     WHERE up."supabaseUid" IS NOT NULL
   LOOP
     UPDATE auth.users
-    SET raw_app_metadata = 
-        raw_app_metadata || jsonb_build_object('role', rec.role)
+    SET raw_app_meta_data = 
+        raw_app_meta_data || jsonb_build_object('role', rec.role)
     WHERE id = rec."supabaseUid"::uuid
       AND (
-        raw_app_metadata IS NULL
-        OR raw_app_metadata->>'role' IS NULL
-        OR raw_app_metadata->>'role' != rec.role
+        raw_app_meta_data IS NULL
+        OR raw_app_meta_data->>'role' IS NULL
+        OR raw_app_meta_data->>'role' != rec.role
       );
   END LOOP;
 END;
 $$;
 
 -- ============================================================
--- 4. Set app_metadata for the super admin email
+-- 4. Set app_meta_data for the super admin email
 -- ============================================================
 UPDATE auth.users
-SET raw_app_metadata = raw_app_metadata || jsonb_build_object('role', 'admin')
+SET raw_app_meta_data = raw_app_meta_data || jsonb_build_object('role', 'admin')
 WHERE email = 'roadsafetydar@gmail.com'
   AND (
-    raw_app_metadata IS NULL
-    OR raw_app_metadata->>'role' IS NULL
-    OR raw_app_metadata->>'role' != 'admin'
+    raw_app_meta_data IS NULL
+    OR raw_app_meta_data->>'role' IS NULL
+    OR raw_app_meta_data->>'role' != 'admin'
   );
 
 -- ============================================================
@@ -102,7 +104,7 @@ CREATE POLICY "Admins can view all profiles"
   FOR SELECT
   TO authenticated
   USING (
-    (SELECT raw_app_metadata->>'role' FROM auth.users WHERE id = auth.uid()) IN ('admin', 'tanroads')
+    (SELECT raw_app_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) IN ('admin', 'tanroads')
     OR EXISTS (
       SELECT 1 FROM public."User" u
       WHERE u.email = (SELECT email FROM auth.users WHERE id = auth.uid())
@@ -117,7 +119,7 @@ CREATE POLICY "Only admins can update profiles"
   FOR UPDATE
   TO authenticated
   USING (
-    (SELECT raw_app_metadata->>'role' FROM auth.users WHERE id = auth.uid()) IN ('admin', 'tanroads')
+    (SELECT raw_app_meta_data->>'role' FROM auth.users WHERE id = auth.uid()) IN ('admin', 'tanroads')
     OR EXISTS (
       SELECT 1 FROM public."User" u
       WHERE u.email = (SELECT email FROM auth.users WHERE id = auth.uid())
@@ -126,7 +128,7 @@ CREATE POLICY "Only admins can update profiles"
   );
 
 -- ============================================================
--- 6. Helper function to manually sync a user's role to app_metadata
+-- 6. Helper function to manually sync a user's role to app_meta_data
 --    Call this from the API or Supabase dashboard when needed:
 --    SELECT public.manually_sync_role('user-uuid-here', 'admin');
 -- ============================================================
@@ -138,7 +140,7 @@ SET search_path = ''
 AS $$
 BEGIN
   UPDATE auth.users
-  SET raw_app_metadata = raw_app_metadata || jsonb_build_object('role', p_role)
+  SET raw_app_meta_data = raw_app_meta_data || jsonb_build_object('role', p_role)
   WHERE id = p_supabase_uid;
 END;
 $$;
