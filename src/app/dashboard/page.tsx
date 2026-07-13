@@ -173,18 +173,51 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
-    const L = (window as any).L;
-    if (!L) return;
 
-    const map = L.map(mapRef.current).setView([-6.7924, 39.2083], 11);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap",
-    }).addTo(map);
-    mapInstanceRef.current = map;
+    // Wait for Leaflet to be available (deferred scripts may load after React)
+    const checkLeaflet = () => {
+      const L = (window as any).L;
+      if (!L) {
+        // Retry after a short delay if Leaflet isn't loaded yet
+        setTimeout(checkLeaflet, 100);
+        return;
+      }
+
+      // Ensure the map container has dimensions before initialising
+      const container = mapRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        setTimeout(checkLeaflet, 100);
+        return;
+      }
+
+      try {
+        const map = L.map(container, {
+          zoomControl: true,
+          attributionControl: true,
+        }).setView([-6.7924, 39.2083], 11);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        mapInstanceRef.current = map;
+
+        // Invalidate size after Leaflet has rendered to fix any sizing issues
+        setTimeout(() => map.invalidateSize(), 300);
+      } catch (e) {
+        console.warn("[dashboard] Leaflet init error:", e);
+      }
+    };
+
+    checkLeaflet();
 
     return () => {
-      map.remove();
-      mapInstanceRef.current = null;
+      if (mapInstanceRef.current) {
+        try { mapInstanceRef.current.remove(); } catch {}
+        mapInstanceRef.current = null;
+      }
     };
   }, []);
 
@@ -494,9 +527,30 @@ export default function DashboardPage() {
         </div>
 
         {/* Map */}
-        <div ref={mapRef} className="rsd-map" style={{ borderRadius: 16, overflow: "hidden", marginBottom: 24, border: "1px solid #E2E8F0" }}>
+        <div ref={mapRef} style={{
+          borderRadius: 16,
+          overflow: "hidden",
+          marginBottom: 24,
+          border: "1px solid #E2E8F0",
+          height: "500px",
+          minHeight: "400px",
+          width: "100%",
+          position: "relative",
+          background: "#F1F5F9",
+        }}>
           {!accidents.length && (
-            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: 14 }}>
+            <div style={{
+              height: "100%",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#94A3B8",
+              fontSize: 14,
+              position: "absolute",
+              inset: 0,
+              zIndex: 0,
+            }}>
               Loading map data...
             </div>
           )}
