@@ -24,10 +24,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Road Safety Dar" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer />
         <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" defer />
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer />
       </head>
       <body>
         <LoadingScreenWrapper />
