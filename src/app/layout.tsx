@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import LoadingScreenWrapper from "@/components/LoadingScreenWrapper";
 
 export const metadata: Metadata = {
   title: "Road Safety Dar es Salaam — Real-time Accident Intelligence",
@@ -28,7 +29,10 @@ export default function RootLayout({
         <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" defer />
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer />
       </head>
-      <body>{children}</body>
+      <body>
+        <LoadingScreenWrapper />
+        {children}
+      </body>
     </html>
   );
 }
