@@ -3,6 +3,14 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 
+// Add Leaflet CSS dynamically (client-side only)
+if (typeof window !== "undefined") {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  document.head.appendChild(link);
+}
+
 interface Accident {
   id: number;
   lat: number;
@@ -38,7 +46,6 @@ export default function DashboardMap({ accidents, selectedHour, seriousMode }: D
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
-  const heatRef = useRef<any>(null);
 
   // Initialize map once
   useEffect(() => {
@@ -48,27 +55,51 @@ export default function DashboardMap({ accidents, selectedHour, seriousMode }: D
       const map = L.map(mapRef.current, {
         zoomControl: true,
         attributionControl: true,
-      }).setView([-6.7924, 39.2083], 11);
+        center: [-6.7924, 39.2083],
+        zoom: 11,
+        zoomSnap: 0.5,
+        wheelPxPerZoomLevel: 120,
+      });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
       }).addTo(map);
 
       mapInstanceRef.current = map;
-      setTimeout(() => map.invalidateSize(), 200);
+
+      // Force multiple invalidates to ensure it fills the container
+      const doInvalidate = () => {
+        try { map.invalidateSize(); } catch {}
+      };
+      setTimeout(doInvalidate, 100);
+      setTimeout(doInvalidate, 300);
+      setTimeout(doInvalidate, 600);
+
+      // Re-invalidate on resize
+      const onResize = () => doInvalidate();
+      window.addEventListener("resize", onResize);
+      
+      // Clean up listener on unmount
+      const currentCleanup = () => {
+        window.removeEventListener("resize", onResize);
+      };
+      (map as any)._rsdCleanup = currentCleanup;
     } catch (e) {
       console.error("[DashboardMap] init error:", e);
     }
 
     return () => {
       if (mapInstanceRef.current) {
+        const cleanup = (mapInstanceRef.current as any)._rsdCleanup;
+        if (cleanup) cleanup();
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
   }, []);
 
-  // Update markers and heatmap when data changes
+  // Update markers when data changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -76,12 +107,6 @@ export default function DashboardMap({ accidents, selectedHour, seriousMode }: D
     // Clear old markers
     markersRef.current.forEach((m) => map.removeLayer(m));
     markersRef.current = [];
-
-    // Clear old heatmap
-    if (heatRef.current) {
-      try { map.removeLayer(heatRef.current); } catch {}
-      heatRef.current = null;
-    }
 
     // Filter accidents
     const filtered = selectedHour === "all"
@@ -114,25 +139,27 @@ export default function DashboardMap({ accidents, selectedHour, seriousMode }: D
             <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${sevColor};"></span>
             <strong style="font-size:14px;text-transform:capitalize;">${a.severity}</strong>
           </div>
-          <div style="font-size:12px;color:#475569;margin-bottom:2px;"><strong>${a.junctionName || "Unknown"}</strong>${a.district ? `, ${a.district}` : ""}</div>
+          <div style="font-size:12px;color:#475569;margin-bottom:2px;">
+            <strong>${a.junctionName || "Unknown"}</strong>${a.district ? `, ${a.district}` : ""}
+          </div>
           <div style="font-size:12px;color:#64748B;">${new Date(a.occurredAt).toLocaleDateString()}</div>
           ${cleanDesc ? `<div style="font-size:12px;color:#475569;margin-top:4px;border-top:1px solid #E2E8F0;padding-top:4px;">${cleanDesc}</div>` : ""}
         </div>`;
 
       const marker = L.circleMarker([a.lat, a.lng], {
-        radius: 6,
-        color: sevColor,
+        radius: 8,
+        color: "#fff",
+        weight: 2,
         fillColor: sevColor,
-        fillOpacity: 0.8,
-        weight: 1,
+        fillOpacity: 0.9,
       }).addTo(map);
       marker.bindPopup(html);
       markersRef.current.push(marker);
     });
 
-    // Try heatmap if available
+    // Try heatmap if leaflet.heat available from CDN
     try {
-      const HeatLayer = (L as any).heatLayer;
+      const HeatLayer = (window as any).L?.heatLayer;
       if (HeatLayer && filtered.length > 0) {
         const points = filtered
           .map((a) => {
@@ -145,31 +172,29 @@ export default function DashboardMap({ accidents, selectedHour, seriousMode }: D
           .filter(Boolean) as [number, number, number][];
 
         if (points.length > 0) {
-          heatRef.current = HeatLayer(points, {
+          HeatLayer(points, {
             radius: 25, blur: 15, maxZoom: 10, max: 4,
             gradient: { 0.4: "#22C55E", 0.6: "#FBBF24", 0.8: "#F87171", 1: "#DC2626" },
           }).addTo(map);
         }
       }
     } catch {}
-
-    setTimeout(() => { try { map.invalidateSize(); } catch {} }, 100);
   }, [accidents, selectedHour, seriousMode]);
 
   return (
     <div
       ref={mapRef}
       style={{
+        width: "100%",
+        height: "500px",
+        minHeight: "400px",
         borderRadius: 16,
         overflow: "hidden",
         marginBottom: 24,
         border: "1px solid #E2E8F0",
-        height: "500px",
-        minHeight: "400px",
-        width: "100%",
         position: "relative",
-        background: "#F1F5F9",
         zIndex: 1,
+        background: "#E8EDF2",
       }}
     />
   );
