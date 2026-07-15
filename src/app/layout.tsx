@@ -3,7 +3,7 @@ import "./globals.css";
 import LoadingScreenWrapper from "@/components/LoadingScreenWrapper";
 
 export const metadata: Metadata = {
-  title: "Road Safety Dar es Salaam — Real-time Accident Intelligence",
+  title: "Dar es Salaam Road Safety — Real-time Accident Intelligence",
   description: "Crowdsourced accident hotspot intelligence for Tanzania's commercial capital.",
   icons: {
     icon: "/favicon.svg",
@@ -21,7 +21,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#1E3A5F" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Road Safety Dar" />
+        <meta name="apple-mobile-web-app-title" content="Dar es Salaam Road Safety" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" defer />

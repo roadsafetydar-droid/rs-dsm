@@ -139,7 +139,7 @@ export default function LoginPage() {
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <img src="/sign-in.png" alt="" style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 10 }} />
             <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 700, color: "#0F172A" }}>Welcome Back</h2>
-            <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>Sign in to Road Safety Dar es Salaam</p>
+            <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>Sign in to Dar es Salaam Road Safety</p>
           </div>
 
           {error && (
@@ -307,10 +307,10 @@ export default function LoginPage() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <img src="/accident-protection.png" alt="" style={{ width: 18, height: 18, opacity: 0.7 }} />
-            <span style={{ fontWeight: 700, fontSize: 13, color: "#0F172A" }}>Road Safety Dar es Salaam</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: "#0F172A" }}>Dar es Salaam Road Safety</span>
           </div>
           <div style={{ fontSize: 11, color: "#64748B" }}>
-            &copy; {new Date().getFullYear()} <strong>Road Safety Dar es Salaam</strong>
+            &copy; {new Date().getFullYear()} <strong>Dar es Salaam Road Safety</strong>
           </div>
         </div>
       </footer>
