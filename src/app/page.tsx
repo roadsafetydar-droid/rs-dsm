@@ -87,8 +87,8 @@ export default function Home() {
           <section className="hero-section">
             <div style={{ position: "relative", zIndex: 1 }}>
               <h1 style={{ margin: 0, fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 800, lineHeight: 1.05, color: "#fff" }}>
-                Road Safety{" "}
-                <span style={{ color: "#60A5FA" }}>Dar es Salaam</span>
+                Dar es Salaam{" "}
+                <span style={{ color: "#60A5FA" }}>Road Safety</span>
               </h1>
               <p style={{ margin: "12px 0 0", fontSize: "clamp(16px, 2vw, 20px)", color: "#94A3B8", maxWidth: "56ch" }}>
                 Real-time accident hotspot intelligence for Tanzania's commercial capital. Crowdsourced reports and official police data, verified for every junction.

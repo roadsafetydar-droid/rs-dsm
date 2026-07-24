@@ -10,92 +10,92 @@ import ScrollReveal from "@/components/ScrollReveal";
 import LoadingScreen from "@/components/LoadingScreen";
 import Footer from "@/components/Footer";
 import dynamic from "next/dynamic";
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from "recharts";
 
 const DashboardMap = dynamic(() => import("@/components/DashboardMap"), {
   ssr: false,
   loading: () => (
-    <div style={{
-      borderRadius: 16, marginBottom: 24, border: "1px solid #E2E8F0",
-      height: "500px", minHeight: "400px", width: "100%",
-      background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center",
-      color: "#94A3B8", fontSize: 14,
-    }}>
+    <div style={{ borderRadius: 16, marginBottom: 24, border: "1px solid #E2E8F0", height: "500px", width: "100%", background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: 14 }}>
       Loading map...
     </div>
   ),
 });
 
 interface Accident {
-  id: number;
-  lat: number;
-  lng: number;
-  severity: string;
-  vehicleTypes: string[];
-  district: string;
-  junctionName: string;
-  occurredAt: string;
-  casualties: number;
-  fatalities: number;
-  verified: boolean;
-  upvoteCount: number;
-  intensity: number;
-  photoUrl?: string;
-  description?: string;
+  id: number; lat: number; lng: number; severity: string; vehicleTypes: string[];
+  district: string; ward: string; junctionName: string; occurredAt: string;
+  casualties: number; fatalities: number; injuries: number; verified: boolean;
+  upvoteCount: number; intensity: number; photoUrl?: string; description?: string;
+  weather?: string; roadCondition?: string;
 }
 
 interface Stats {
-  total: number;
-  fatal: number;
-  serious: number;
-  minor: number;
-  critical: number;
-  verified: number;
-  totalFatalities: number;
-  totalCasualties: number;
-  junctionCount: number;
-  severity: Record<string, number>;
-  vehicles: Record<string, number>;
+  total: number; fatal: number; serious: number; minor: number; critical: number;
+  verified: number; pending: number; totalFatalities: number; totalCasualties: number;
+  totalInjuries: number; junctionCount: number;
+  severity: Record<string, number>; vehicles: Record<string, number>;
   monthly: { month: string; count: number }[];
   hourly: { hour: number; count: number }[];
+  weekly: { day: string; count: number }[];
+  currentYearMonthly: { month: string; count: number }[];
+  byDistrict: { name: string; count: number }[];
+  byWeather: { name: string; count: number }[];
+  byRoadType: { name: string; count: number }[];
+  hotspots: { name: string; count: number; fatal: number; severity: string }[];
+  prediction: number;
+  timeOfDay: { period: string; count: number }[];
 }
 
-type Mood = "sad" | "tragic" | "hopeful" | "miraculous";
-const MOOD_META: Record<Mood, { emoji: string; label: string; color: string }> = {
-  sad:        { emoji: "😔", label: "Sad",        color: "#3B82F6" },
-  tragic:     { emoji: "💔", label: "Tragic",     color: "#DC2626" },
-  hopeful:    { emoji: "🤝", label: "Hopeful",    color: "#22C55E" },
-  miraculous: { emoji: "✨", label: "Miraculous", color: "#A855F7" },
-};
-
-function splitMood(description?: string | null): { text: string; mood: Mood | null } {
-  if (!description) return { text: "", mood: null };
-  const m = /^\[mood:(sad|tragic|hopeful|miraculous)\]\s*/i.exec(description);
-  if (!m) return { text: description, mood: null };
-  return { text: description.slice(m[0].length), mood: m[1].toLowerCase() as Mood };
-}
-
-async function fetchAccidents(url: string): Promise<Accident[]> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data as Accident[];
-  } catch {
-    return [];
-  }
-}
+const CHART_COLORS = ["#3B82F6", "#22C55E", "#FBBF24", "#F87171", "#A855F7", "#EC4899", "#14B8A6", "#F97316"];
+const PIE_COLORS = ["#DC2626", "#FBBF24", "#3B82F6", "#22C55E"];
+const HOURS = Array.from({ length: 24 }, (_, i) => ({ hour: i, label: `${i}:00` }));
 
 async function fetchStats(url: string): Promise<Stats | null> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data || typeof data !== "object" || "error" in data) return null;
-    return data as Stats;
-  } catch {
-    return null;
-  }
+  try { const r = await fetch(url); if (!r.ok) return null; const d = await r.json(); if (!d || d.error) return null; return d as Stats; } catch { return null; }
+}
+
+function ExportCSVButton({ stats }: { stats: Stats | null }) {
+  const handleExport = () => {
+    if (!stats) return;
+    const rows = [["Metric", "Value"]];
+    rows.push(["Total Accidents", stats.total.toString()]);
+    rows.push(["Fatal", stats.fatal.toString()]);
+    rows.push(["Serious", stats.serious.toString()]);
+    rows.push(["Minor", stats.minor.toString()]);
+    rows.push(["Critical", stats.critical.toString()]);
+    rows.push(["Verified", stats.verified.toString()]);
+    rows.push(["Total Fatalities", stats.totalFatalities.toString()]);
+    rows.push(["Total Casualties", stats.totalCasualties.toString()]);
+    const csv = rows.map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "dashboard-stats.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <button onClick={handleExport} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #E2E8F0", background: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", color: "#475569" }}>
+      Export CSV
+    </button>
+  );
+}
+
+function ChartCard({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#0F172A" }}>{title}</h3>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Skeleton({ height = 200 }: { height?: number }) {
+  return <div style={{ height, background: "#F1F5F9", borderRadius: 12, animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }} />;
 }
 
 export default function DashboardPage() {
@@ -104,14 +104,13 @@ export default function DashboardPage() {
   const [selectedHour, setSelectedHour] = useState("all");
   const [seriousMode, setSeriousMode] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [aiSummary, setAiSummary] = useState<{
-    text: string;
-    provider?: string;
-    loading: boolean;
-    error?: string;
-    lang: "en" | "sw";
-  }>({ text: "", loading: true, lang: "en" });
+  const [aiSummary, setAiSummary] = useState<{ text: string; provider?: string; loading: boolean; error?: string; lang: "en" | "sw" }>({ text: "", loading: true, lang: "en" });
   const [roleSyncStatus, setRoleSyncStatus] = useState<{ loading: boolean; message?: string; error?: string }>({ loading: false });
+
+  // Filters
+  const [filters, setFilters] = useState({
+    dateRange: "", month: "", year: "", district: "", ward: "", severity: "", weather: "", roadType: ""
+  });
 
   const handleFixRole = useCallback(async () => {
     setRoleSyncStatus({ loading: true });
@@ -127,167 +126,109 @@ export default function DashboardPage() {
           localStorage.setItem("rsd_user", JSON.stringify(parsed));
           window.dispatchEvent(new Event("rsd:user-changed"));
         }
-      } else {
-        setRoleSyncStatus({ loading: false, error: data.error || "Failed" });
-      }
-    } catch (err: any) {
-      setRoleSyncStatus({ loading: false, error: err?.message || "Network error" });
-    }
+      } else setRoleSyncStatus({ loading: false, error: data.error || "Failed" });
+    } catch { setRoleSyncStatus({ loading: false, error: "Network error" }); }
     setTimeout(() => setRoleSyncStatus({ loading: false }), 5000);
   }, []);
 
   const fetchAiSummary = (lang: "en" | "sw" = "en") => {
-    setAiSummary((s) => ({ ...s, loading: true, lang, error: undefined }));
+    setAiSummary(s => ({ ...s, loading: true, lang, error: undefined }));
     fetch(`/api/ai-summary?lang=${lang}&fresh=1`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.ok) setAiSummary({ text: d.text, provider: d.provider, loading: false, lang });
-        else setAiSummary({ text: "", loading: false, error: d.hint || d.error || "AI unavailable", lang });
-      })
-      .catch((err) => {
-        setAiSummary({ text: "", loading: false, error: err?.message || "Network error", lang });
-      });
+      .then(r => r.json())
+      .then(d => { if (d.ok) setAiSummary({ text: d.text, provider: d.provider, loading: false, lang }); else setAiSummary({ text: "", loading: false, error: d.hint || d.error || "AI unavailable", lang }); })
+      .catch(err => setAiSummary({ text: "", loading: false, error: err?.message || "Network error", lang }));
   };
 
   useEffect(() => { fetchAiSummary("en"); }, []);
   useEffect(() => {
-    fetchAccidents("/api/accidents").then(setAccidents);
+    fetch("/api/accidents").then(r => r.json()).then(setAccidents).catch(() => {});
     fetchStats("/api/stats").then(setStats);
     const stored = localStorage.getItem("rsd_user");
     if (stored) setUser(JSON.parse(stored));
   }, []);
 
   const [loadingComplete, setLoadingComplete] = useState(false);
-  const sevColors: Record<string, string> = {
-    fatal: "#F87171",
-    critical: "#FBBF24",
-    serious: "#3B82F6",
-    minor: "#22C55E",
-  };
+
+  const sevColors: Record<string, string> = { fatal: "#F87171", critical: "#FBBF24", serious: "#3B82F6", minor: "#22C55E" };
   const sevList = ["fatal", "critical", "serious", "minor"] as const;
-  const sevChartColors = ["#DC2626", "#FBBF24", "#3B82F6", "#22C55E"];
 
-  // SVG pie chart segments
-  const pieSegments = useMemo(() => {
-    if (!stats) return [];
-    const total = sevList.reduce((s, k) => s + (stats.severity[k] || 0), 0);
-    if (!total) return [];
-    let cumAngle = -Math.PI / 2;
-    return sevList.map((k, i) => {
-      const val = stats.severity[k] || 0;
-      const angle = (val / total) * 2 * Math.PI;
-      const start = cumAngle;
-      const end = cumAngle + angle;
-      cumAngle = end;
-      const r = 80;
-      const cx = 100, cy = 100;
-      const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
-      const x2 = cx + r * Math.cos(end), y2 = cy + r * Math.sin(end);
-      const large = angle > Math.PI ? 1 : 0;
-      return { key: k, val, color: sevChartColors[i], path: `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z` };
-    });
-  }, [stats]);
-
-  // SVG bar chart
-  const BarChart = ({ data, color, height = 180 }: { data: { label: string; value: number }[]; color: string; height?: number }) => {
-    if (!data.length) return <p style={{ color: "#94A3B8", fontSize: 13, textAlign: "center", padding: 20 }}>No data</p>;
-    const max = Math.max(...data.map(d => d.value), 1);
-    const w = Math.max(40, Math.min(60, 520 / data.length));
-    const pad = 8;
-    const svgW = data.length * (w + pad) + 20;
-    return (
-      <svg viewBox={`0 0 ${svgW} ${height}`} style={{ width: "100%", height }} preserveAspectRatio="xMidYMid meet">
-        {data.map((d, i) => {
-          const barH = (d.value / max) * (height - 30);
-          const x = 10 + i * (w + pad);
-          const y = height - 25 - barH;
-          return (
-            <g key={d.label}>
-              <rect x={x} y={y} width={w} height={barH} fill={color} rx={4} />
-              <text x={x + w / 2} y={height - 8} textAnchor="middle" fontSize={10} fill="#64748B">{d.label}</text>
-              {barH > 15 && <text x={x + w / 2} y={y + 14} textAnchor="middle" fontSize={10} fill="#fff" fontWeight={700}>{d.value}</text>}
-            </g>
-          );
-        })}
-      </svg>
-    );
-  };
-
-  const monthlyBars = useMemo(() => {
-    if (!stats?.monthly?.length) return [];
-    return stats.monthly.map(m => ({
-      label: (() => { const [y, mo] = m.month.split("-"); return `${y.slice(2)}/${mo}`; })(),
-      value: m.count,
-    }));
-  }, [stats]);
-
-  const annualBars = useMemo(() => {
-    if (!stats?.monthly?.length) return [];
-    const yearMap: Record<string, number> = {};
-    stats.monthly.forEach(m => { const y = m.month.split("-")[0]; yearMap[y] = (yearMap[y] || 0) + m.count; });
-    return Object.entries(yearMap).sort(([a], [b]) => a.localeCompare(b)).map(([y, c]) => ({ label: y, value: c }));
-  }, [stats]);
+  const districts = useMemo(() => [...new Set(accidents.map(a => a.district).filter(Boolean))].sort(), [accidents]);
+  const filterOptions = useMemo(() => ({
+    districts: [...new Set(accidents.map(a => a.district).filter(Boolean))].sort(),
+    weathers: [...new Set(accidents.map(a => a.weather).filter(Boolean))].sort(),
+    roadTypes: [...new Set(accidents.map(a => a.roadCondition).filter(Boolean))].sort(),
+    years: [...new Set(accidents.map(a => new Date(a.occurredAt).getFullYear().toString()))].sort(),
+  }), [accidents]);
 
   if (!loadingComplete) {
     return <LoadingScreen onComplete={() => setLoadingComplete(true)} />;
   }
 
+  const selectStyle: React.CSSProperties = {
+    padding: "6px 10px", border: "1px solid #E2E8F0", borderRadius: 8,
+    fontSize: 12, minHeight: 36, background: "#fff", color: "#0F172A",
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", flexDirection: "column" }}>
       <PremiumTopNav variant="dashboard" />
 
-      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 12px", position: "relative", zIndex: 1, flex: 1, width: "100%", boxSizing: "border-box" }}>
+      <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 12px", position: "relative", zIndex: 1, flex: 1, width: "100%", boxSizing: "border-box" }}>
+        {/* Filters Bar */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", padding: "12px 16px", background: "#fff", borderRadius: 12, border: "1px solid #E2E8F0", alignItems: "center" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>Filters</span>
+          <select value={filters.year} onChange={e => setFilters(f => ({...f, year: e.target.value}))} style={selectStyle}>
+            <option value="">All Years</option>
+            {filterOptions.years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select value={filters.month} onChange={e => setFilters(f => ({...f, month: e.target.value}))} style={selectStyle}>
+            <option value="">All Months</option>
+            {["01","02","03","04","05","06","07","08","09","10","11","12"].map(m => (
+              <option key={m} value={m}>{new Date(2020, parseInt(m)-1).toLocaleString('en', { month: 'short' })}</option>
+            ))}
+          </select>
+          <select value={filters.district} onChange={e => setFilters(f => ({...f, district: e.target.value}))} style={selectStyle}>
+            <option value="">All Districts</option>
+            {filterOptions.districts.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select value={filters.severity} onChange={e => setFilters(f => ({...f, severity: e.target.value}))} style={selectStyle}>
+            <option value="">All Severity</option>
+            {sevList.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+          </select>
+          <select value={filters.weather} onChange={e => setFilters(f => ({...f, weather: e.target.value}))} style={selectStyle}>
+            <option value="">All Weather</option>
+            {filterOptions.weathers.map(w => <option key={w} value={w}>{w}</option>)}
+          </select>
+          <select value={filters.roadType} onChange={e => setFilters(f => ({...f, roadType: e.target.value}))} style={selectStyle}>
+            <option value="">All Road Types</option>
+            {filterOptions.roadTypes.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <ExportCSVButton stats={stats} />
+        </div>
+
         <ExportBar
-          accidentCount={
-            selectedHour === "all"
-              ? accidents.length
-              : accidents.filter((a) => new Date(a.occurredAt).getHours() === parseInt(selectedHour)).length
-          }
+          accidentCount={selectedHour === "all" ? accidents.length : accidents.filter(a => new Date(a.occurredAt).getHours() === parseInt(selectedHour)).length}
           selectedHour={selectedHour}
         />
 
-        {/* AI Safety Summary Banner */}
-        <div style={{
-          marginBottom: 24, padding: "20px 24px", borderRadius: 16,
-          background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)",
-          color: "#F8FAFC", boxShadow: "0 4px 24px rgba(15, 23, 42, 0.15)",
-          position: "relative", overflow: "hidden",
-        }}>
+        {/* AI Safety Summary */}
+        <div style={{ marginBottom: 24, padding: "20px 24px", borderRadius: 16, background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)", color: "#F8FAFC", boxShadow: "0 4px 24px rgba(15, 23, 42, 0.15)", position: "relative", overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-            <div style={{
-              flexShrink: 0, width: 44, height: 44, borderRadius: 12,
-              background: "linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 22, fontWeight: 800, color: "#1E293B",
-            }}>✦</div>
+            <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, color: "#1E293B" }}>✦</div>
             <div style={{ flex: 1, minWidth: 280 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#D4AF37" }}>
-                  AI Safety Brief
-                </span>
-                {aiSummary.provider && (
-                  <span style={{ fontSize: 10, color: "#94A3B8", padding: "2px 6px", border: "1px solid #334155", borderRadius: 999 }}>
-                    via {aiSummary.provider === "cloudflare" ? "Llama 3.3 70B" : aiSummary.provider}
-                  </span>
-                )}
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#D4AF37" }}>AI Safety Brief</span>
+                {aiSummary.provider && <span style={{ fontSize: 10, color: "#94A3B8", padding: "2px 6px", border: "1px solid #334155", borderRadius: 999 }}>via {aiSummary.provider === "cloudflare" ? "Llama 3.3 70B" : aiSummary.provider}</span>}
                 {aiSummary.loading && <span style={{ fontSize: 10, color: "#94A3B8" }}>thinking...</span>}
                 <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-                  <button type="button" onClick={() => fetchAiSummary(aiSummary.lang === "sw" ? "en" : "sw")}
-                    style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", background: "transparent", border: "1px solid #334155", borderRadius: 999, padding: "2px 8px", cursor: "pointer" }}>
-                    {aiSummary.lang === "sw" ? "🇬🇧 EN" : "🇹🇿 SW"}
-                  </button>
-                  <button type="button" onClick={() => fetchAiSummary(aiSummary.lang)}
-                    style={{ fontSize: 10, fontWeight: 700, color: "#D4AF37", background: "transparent", border: "1px solid #D4AF37", borderRadius: 999, padding: "2px 8px", cursor: "pointer" }}>
-                    ↻ Refresh
-                  </button>
+                  <button type="button" onClick={() => fetchAiSummary(aiSummary.lang === "sw" ? "en" : "sw")} style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", background: "transparent", border: "1px solid #334155", borderRadius: 999, padding: "2px 8px", cursor: "pointer" }}>{aiSummary.lang === "sw" ? "🇬🇧 EN" : "🇹🇿 SW"}</button>
+                  <button type="button" onClick={() => fetchAiSummary(aiSummary.lang)} style={{ fontSize: 10, fontWeight: 700, color: "#D4AF37", background: "transparent", border: "1px solid #D4AF37", borderRadius: 999, padding: "2px 8px", cursor: "pointer" }}>↻ Refresh</button>
                 </div>
               </div>
               {aiSummary.loading && !aiSummary.text ? (
                 <div style={{ height: 48, background: "linear-gradient(90deg, #334155 0%, #475569 50%, #334155 100%)", backgroundSize: "200% 100%", borderRadius: 8, animation: "pulse 1.5s ease-in-out infinite" }} />
               ) : aiSummary.error ? (
-                <div style={{ fontSize: 13, color: "#94A3B8", fontStyle: "italic" }}>
-                  AI summary unavailable. {aiSummary.error.includes("GROQ_API_KEY") || aiSummary.error.includes("CLOUDFLARE_API_TOKEN") ? "Add an API key in landing/.env to enable." : aiSummary.error}
-                </div>
+                <div style={{ fontSize: 13, color: "#94A3B8", fontStyle: "italic" }}>AI summary unavailable.</div>
               ) : (
                 <div style={{ fontSize: 14, lineHeight: 1.6, color: "#E2E8F0" }}>{aiSummary.text}</div>
               )}
@@ -298,175 +239,194 @@ export default function DashboardPage() {
         {/* KPI Grid */}
         {stats && (
           <ScrollReveal>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 24 }}>
               {[
-                { label: "Total Reports", value: stats.total, color: "#F87171", icon: "📊" },
-                { label: "Verified", value: stats.verified, color: "#22C55E", icon: "✓" },
+                { label: "Total Accidents", value: stats.total, color: "#3B82F6", icon: "📊" },
                 { label: "Fatal", value: stats.fatal, color: "#DC2626", icon: "💔" },
-                { label: "Critical", value: stats.critical, color: "#FBBF24", icon: "⚠️" },
-                { label: "Serious", value: stats.serious, color: "#3B82F6", icon: "🏥" },
-                { label: "Junctions", value: stats.junctionCount, color: "#A855F7", icon: "📍" },
+                { label: "Serious Injuries", value: stats.serious, color: "#F87171", icon: "🏥" },
+                { label: "Minor Injuries", value: stats.minor, color: "#22C55E", icon: "🩹" },
+                { label: "Total Deaths", value: stats.totalFatalities, color: "#991B1B", icon: "⚠️" },
+                { label: "Vehicles Involved", value: Object.values(stats.vehicles).reduce((a, b) => a + b, 0), color: "#A855F7", icon: "🚗" },
               ].map((kpi) => (
-                <div key={kpi.label} style={{
-                  background: "#fff", padding: "20px 16px", borderRadius: 16,
-                  border: "1px solid #E2E8F0", borderTop: `3px solid ${kpi.color}`,
-                  textAlign: "center", cursor: "default",
-                  transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s",
-                }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(15,23,42,0.08)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-                >
-                  <div style={{ fontSize: 24, marginBottom: 4 }}>{kpi.icon}</div>
-                  <CountUp end={kpi.value} style={{ fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 32, fontWeight: 800, color: kpi.color }} />
-                  <div style={{ fontSize: 13, color: "#475569", fontWeight: 600, marginTop: 4 }}>{kpi.label}</div>
+                <div key={kpi.label} style={{ background: "#fff", padding: "16px", borderRadius: 12, border: "1px solid #E2E8F0", borderTop: `3px solid ${kpi.color}`, textAlign: "center", cursor: "default", transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(15,23,42,0.08)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
+                  <div style={{ fontSize: 20, marginBottom: 4 }}>{kpi.icon}</div>
+                  <CountUp end={kpi.value} style={{ fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 28, fontWeight: 800, color: kpi.color }} />
+                  <div style={{ fontSize: 11, color: "#475569", fontWeight: 600, marginTop: 4 }}>{kpi.label}</div>
                 </div>
               ))}
             </div>
           </ScrollReveal>
         )}
 
-        {/* Map controls */}
+        {/* Map Controls */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, padding: "12px 16px", background: "#fff", borderRadius: 12, flexWrap: "wrap" }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", textTransform: "uppercase", letterSpacing: "0.04em" }}>Filter by Hour</label>
-          <select value={selectedHour} onChange={(e) => setSelectedHour(e.target.value)}
-            style={{ padding: "8px 16px", border: "1px solid #E2E8F0", borderRadius: 12, fontSize: 14, minHeight: 44 }}>
+          <select value={selectedHour} onChange={e => setSelectedHour(e.target.value)} style={{ padding: "8px 16px", border: "1px solid #E2E8F0", borderRadius: 12, fontSize: 14, minHeight: 44 }}>
             <option value="all">All Hours</option>
-            {Array.from({ length: 24 }, (_, i) => (
-              <option key={i} value={i}>{i}:00 - {(i + 1) % 24}:00</option>
-            ))}
+            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{i}:00 - {(i + 1) % 24}:00</option>)}
           </select>
           <div style={{ width: 1, height: 28, background: "#E2E8F0", margin: "0 4px" }} />
-          <button onClick={() => setSeriousMode((v) => !v)} aria-pressed={seriousMode}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", minHeight: 44, borderRadius: 12,
-              border: seriousMode ? "1px solid #DC2626" : "1px solid #E2E8F0",
-              background: seriousMode ? "linear-gradient(135deg, #DC2626 0%, #991B1B 100%)" : "#fff",
-              color: seriousMode ? "#fff" : "#475569", fontSize: 14, fontWeight: 700, cursor: "pointer",
-              boxShadow: seriousMode ? "0 4px 14px rgba(220, 38, 38, 0.35)" : "none", transition: "all 0.15s ease",
-            }}>
+          <button onClick={() => setSeriousMode(v => !v)} aria-pressed={seriousMode} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", minHeight: 44, borderRadius: 12, border: seriousMode ? "1px solid #DC2626" : "1px solid #E2E8F0", background: seriousMode ? "linear-gradient(135deg, #DC2626 0%, #991B1B 100%)" : "#fff", color: seriousMode ? "#fff" : "#475569", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: seriousMode ? "0 4px 14px rgba(220, 38, 38, 0.35)" : "none", transition: "all 0.15s ease" }}>
             <span aria-hidden style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: seriousMode ? "#fff" : "#DC2626", boxShadow: seriousMode ? "0 0 0 3px rgba(255,255,255,0.25)" : "none" }} />
             {seriousMode ? "Serious Mode: ON" : "Serious Mode"}
           </button>
-          {seriousMode && <span style={{ fontSize: 12, color: "#64748B", marginLeft: 4 }}>Showing fatal / critical / serious, verified or with applauds.</span>}
         </div>
 
-        {/* Map - using npm leaflet package */}
+        {/* Map */}
         <DashboardMap accidents={accidents} selectedHour={selectedHour} seriousMode={seriousMode} />
 
-        {/* Serious Incidents feed */}
-        {seriousMode && (() => {
-          const hourFiltered = selectedHour === "all" ? accidents : accidents.filter((a) => new Date(a.occurredAt).getHours() === parseInt(selectedHour));
-          const list = hourFiltered
-            .filter((a) => ["fatal", "critical", "serious"].includes(a.severity))
-            .filter((a) => a.verified || a.upvoteCount > 0)
-            .sort((a, b) => {
-              const sevWeight = (s: string) => s === "fatal" ? 3 : s === "critical" ? 2 : 1;
-              if (sevWeight(b.severity) !== sevWeight(a.severity)) return sevWeight(b.severity) - sevWeight(a.severity);
-              if (b.upvoteCount !== a.upvoteCount) return b.upvoteCount - a.upvoteCount;
-              return new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime();
-            }).slice(0, 10);
-
-          if (!list.length) {
-            return (
-              <div style={{ background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)", color: "#fff", padding: 24, borderRadius: 16, marginBottom: 24, textAlign: "center" }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🌤️</div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>No serious incidents in this window</div>
-                <div style={{ fontSize: 13, opacity: 0.7, marginTop: 4 }}>Either no fatal/critical/serious reports have been verified yet, or the time filter is hiding them.</div>
-              </div>
-            );
-          }
-
-          return (
-            <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 16, padding: 20, marginBottom: 24, borderTop: "4px solid #DC2626" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "#DC2626", boxShadow: "0 0 0 4px rgba(220,38,38,0.18)" }} />
-                <h3 style={{ margin: 0, fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 18, fontWeight: 800 }}>Serious Incidents</h3>
-                <span style={{ fontSize: 12, color: "#64748B", fontWeight: 600 }}>{list.length} of {hourFiltered.filter((a) => ["fatal","critical","serious"].includes(a.severity)).length} shown</span>
-              </div>
-              <div style={{ display: "grid", gap: 10 }}>
-                {list.map((a) => {
-                  const sevColor = sevColors[a.severity] || "#DC2626";
-                  return (
-                    <div key={a.id} style={{ padding: 12, borderRadius: 12, background: "#F8FAFC", border: "1px solid #E2E8F0", display: "flex", gap: 12, alignItems: "center" }}>
-                      <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", background: sevColor, flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: sevColor, textTransform: "uppercase", letterSpacing: "0.04em" }}>{a.severity}</span>
-                          {a.verified && <span style={{ fontSize: 10, fontWeight: 700, background: "#DCFCE7", color: "#166534", padding: "2px 6px", borderRadius: 999 }}>✓ Verified</span>}
-                          {a.fatalities > 0 && <span style={{ fontSize: 10, fontWeight: 700, background: "#FEE2E2", color: "#991B1B", padding: "2px 6px", borderRadius: 999 }}>{a.fatalities} fatality{a.fatalities !== 1 ? "ies" : ""}</span>}
-                          {a.casualties > 0 && <span style={{ fontSize: 10, fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "2px 6px", borderRadius: 999 }}>{a.casualties} injured</span>}
-                        </div>
-                        <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 600, marginTop: 4 }}>{a.junctionName || "(unnamed)"}{a.district ? `, ${a.district}` : ""}</div>
-                        <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>{new Date(a.occurredAt).toLocaleString()}</div>
-                      </div>
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: "#DC2626", lineHeight: 1 }}>{a.upvoteCount}</div>
-                        <div style={{ fontSize: 10, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 2 }}>applaud{a.upvoteCount !== 1 ? "s" : ""}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Charts */}
-        {stats && (
+        {/* Charts Grid */}
+        {stats ? (
           <ScrollReveal>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 16 }}>
-              {/* Pie chart */}
-              <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0", textAlign: "center" }}>
-                <h3 style={{ margin: "0 0 8px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Severity Distribution</h3>
-                <svg viewBox="0 0 200 130" style={{ width: "100%", maxHeight: 160 }}>
-                  {pieSegments.map(s => <path key={s.key} d={s.path} fill={s.color} stroke="#fff" strokeWidth={2} />)}
-                  <text x={100} y={105} textAnchor="middle" fontSize={13} fill="#475569" fontWeight={600}>{stats.total} Total</text>
-                </svg>
-                <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
-                  {sevList.map((k, i) => {
-                    const val = stats.severity[k] || 0;
-                    if (!val) return null;
-                    return (
-                      <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#475569" }}>
-                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: sevChartColors[i], display: "inline-block" }} />
-                        {k.charAt(0).toUpperCase() + k.slice(1)} ({val})
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16, marginBottom: 24 }}>
 
-              {/* Monthly trend */}
-              <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0" }}>
-                <h3 style={{ margin: "0 0 8px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Monthly Trends</h3>
-                <BarChart data={monthlyBars} color="#3B82F6" />
-              </div>
+              {/* 1. Monthly Accident Trend - Line Chart */}
+              <ChartCard title="Monthly Accident Trend">
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={stats.currentYearMonthly}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                    <Line type="monotone" dataKey="count" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3, fill: "#3B82F6" }} activeDot={{ r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartCard>
 
-              {/* Annual trend */}
-              <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0" }}>
-                <h3 style={{ margin: "0 0 8px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Annual Trends</h3>
-                <BarChart data={annualBars} color="#DC2626" />
-              </div>
-            </div>
+              {/* 2. Severity Distribution - Pie Chart */}
+              <ChartCard title="Accident Severity Distribution">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie data={sevList.filter(s => (stats.severity[s] || 0) > 0).map(s => ({ name: s.charAt(0).toUpperCase() + s.slice(1), value: stats.severity[s] || 0 }))}
+                      cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+                      {sevList.filter(s => (stats.severity[s] || 0) > 0).map((s, i) => (
+                        <Cell key={s} fill={PIE_COLORS[["fatal","critical","serious","minor"].indexOf(s)]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
 
-            {/* Vehicle Types */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-              <div style={{ background: "#fff", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0" }}>
-                <h3 style={{ margin: "0 0 16px", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif', fontSize: 16, fontWeight: 600 }}>Vehicle Types</h3>
-                {Object.entries(stats.vehicles).map(([v, count]) => (
-                  <div key={v} style={{ marginBottom: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569", marginBottom: 2 }}>
-                      <span>{v}</span>
-                      <span style={{ fontWeight: 700 }}>{count}</span>
-                    </div>
-                    <div style={{ height: 8, background: "#E2E8F0", borderRadius: 999 }}>
-                      <div style={{ width: `${(count / stats.total) * 100}%`, height: "100%", background: "#A855F7", borderRadius: 999 }} />
-                    </div>
+              {/* 4. Accidents by District - Horizontal Bar Chart */}
+              <ChartCard title="Accidents by District">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={stats.byDistrict.slice(0, 8)} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#64748B" }} width={80} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                    <Bar dataKey="count" fill="#FBBF24" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* 5. Accidents by Weather - Doughnut Chart */}
+              <ChartCard title="Accidents by Weather Condition">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie data={stats.byWeather.slice(0, 6).map(w => ({ name: w.name, value: w.count }))}
+                      cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+                      {stats.byWeather.slice(0, 6).map((_, i) => (
+                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* 6. Accidents by Road Type - Bar Chart */}
+              <ChartCard title="Accidents by Road Condition">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={stats.byRoadType.slice(0, 8)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} angle={-20} textAnchor="end" height={60} />
+                    <YAxis tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                    <Bar dataKey="count" fill="#F87171" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* 7. Top 10 Accident Hotspots - Ranked Bar Chart */}
+              <ChartCard title="Top 10 Accident Hotspots">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={stats.hotspots} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: "#64748B" }} width={120} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                    <Bar dataKey="count" fill="#A855F7" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* 8. Peak Accident Hours - Area Chart */}
+              <ChartCard title="Peak Accident Hours">
+                <ResponsiveContainer width="100%" height={220}>
+                  <AreaChart data={stats.hourly}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                    <XAxis dataKey="hour" tick={{ fontSize: 11, fill: "#64748B" }} tickFormatter={(h: any) => `${h}:00`} />
+                    <YAxis tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} labelFormatter={(h: any) => `${h}:00 - ${(h+1)%24}:00`} />
+                    <Area type="monotone" dataKey="count" stroke="#F97316" fill="#F9731680" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* Weekly Trend */}
+              <ChartCard title="Weekly Accident Trend">
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={stats.weekly}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#64748B" }} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0" }} />
+                    <Bar dataKey="count" fill="#14B8A6" radius={[4,4,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* Time of Day Analysis */}
+              <ChartCard title="Time of Day Analysis">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie data={stats.timeOfDay.map(t => ({ name: t.period.charAt(0).toUpperCase() + t.period.slice(1), value: t.count }))}
+                      cx="50%" cy="50%" outerRadius={70} paddingAngle={3} dataKey="value">
+                      {stats.timeOfDay.map((_, i) => <Cell key={i} fill={["#3B82F6","#FBBF24","#F87171","#6366F1"][i]} />)}
+                    </Pie>
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              {/* Prediction Card */}
+              <ChartCard title="Accident Prediction (Next Month)">
+                <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "12px 0" }}>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: "#3B82F6", fontFamily: '"Hubot Sans","Nunito","Quicksand",system-ui,sans-serif' }}>
+                    {stats.prediction}
                   </div>
-                ))}
-              </div>
+                  <div style={{ fontSize: 13, color: "#64748B", lineHeight: 1.4 }}>
+                    Predicted accidents<br />based on recent trend
+                  </div>
+                </div>
+                <div style={{ height: 4, background: "#E2E8F0", borderRadius: 999 }}>
+                  <div style={{ width: `${Math.min(100, (stats.prediction / Math.max(...stats.currentYearMonthly.map(m => m.count), 1)) * 100)}%`, height: "100%", background: "linear-gradient(90deg, #22C55E, #FBBF24, #F87171)", borderRadius: 999 }} />
+                </div>
+              </ChartCard>
+
             </div>
           </ScrollReveal>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16, marginBottom: 24 }}>
+            {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={260} />)}
+          </div>
         )}
       </main>
       <Footer />

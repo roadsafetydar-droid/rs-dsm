@@ -50,7 +50,7 @@ WHERE "supabaseUid" = (SELECT id FROM auth.users WHERE email = 'user@example.com
 1. Go to **Supabase Dashboard → Table Editor**
 2. Open the `UserProfile` table
 3. Find the user by email
-4. Edit the `role` column: `community`, `police`, `tanroads`, `researcher`, or `admin`
+4. Edit the `role` column: `community`, `police`, `tanroads`, or `admin`
 5. The trigger will automatically sync to `app_metadata`
 
 ---
@@ -91,7 +91,7 @@ WHERE u.email = 'user@example.com';
 | `community` | Dashboard, Report | Default role — can view data and submit reports |
 | `police` | Dashboard, Report, Editor Queue | Can verify/reject accident reports |
 | `tanroads` | Dashboard, Report, Editor Queue, Authority Console | Full admin access |
-| `researcher` | Dashboard, Report | Can access data exports |
+| `tanroads` | Authority Dashboard, Hotspots, Trends | TANROADS Officer |
 | `admin` | Everything | Superuser (set via `isSuperuser` flag) |
 
 ---

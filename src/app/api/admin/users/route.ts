@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: upErr.message }, { status: 500 });
       }
 
-      // Also update User.isStaff if role is editor or admin
-      const isStaffFlag = role === "editor" || role === "admin";
+      // Also update User.isStaff if role is police or admin
+      const isStaffFlag = role === "police" || role === "admin";
       await admin.from("User").update({ isStaff: isStaffFlag }).eq("id", userId);
 
       // Sync role to Supabase app_metadata for immediate effect (no delay waiting for DB trigger)

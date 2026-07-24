@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import PremiumTopNav from "@/components/PremiumTopNav";
+import DashboardCharts from "@/components/DashboardCharts";
 import { createClient } from "@/lib/supabase-browser";
 
 interface AccidentItem {
@@ -50,6 +51,7 @@ export default function EditorPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [fullStats, setFullStats] = useState<any>(null);
   const [stats, setStats] = useState({ pending: 0, verified: 0, rejected: 0 });
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function EditorPage() {
       const userEmail = data.supabaseUser?.email?.toLowerCase() ?? "";
       const isAdminEmail = userEmail === "roadsafetydar@gmail.com";
       const isStaff =
-        data.role === "editor" ||
+        data.role === "police" ||
         data.role === "admin" ||
         data.dbUser?.isStaff === true ||
         data.dbUser?.isSuperuser === true ||
@@ -118,6 +120,7 @@ export default function EditorPage() {
       const res = await fetch("/api/stats");
       if (res.ok) {
         const data = await res.json();
+        setFullStats(data);
         setStats({
           pending: data.pending || 0,
           verified: data.verified || 0,
@@ -272,6 +275,19 @@ export default function EditorPage() {
             }}
           />
         </div>
+
+        {/* Charts */}
+        {fullStats && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 16 }}>📊</span>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#0F172A" }}>
+                Accident Trends
+              </h3>
+            </div>
+            <DashboardCharts stats={fullStats} />
+          </div>
+        )}
 
         {error && (
           <div style={{

@@ -72,7 +72,7 @@ export async function POST(
       const isStaff =
         dbUser?.isStaff === true ||
         dbUser?.isSuperuser === true ||
-        role === "editor" ||
+        role === "police" ||
         role === "admin";
 
       if (!isStaff) {

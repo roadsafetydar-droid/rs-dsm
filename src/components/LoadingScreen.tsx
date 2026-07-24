@@ -88,8 +88,8 @@ export default function LoadingScreen({ onComplete }: { onComplete?: () => void 
               position: "relative",
             }}
           >
-            Road Safety{" "}
-            <span style={{ color: "#60A5FA" }}>Dar</span>
+            Dar es Salaam{" "}
+            <span style={{ color: "#60A5FA" }}>Road Safety</span>
           </motion.h1>
 
           <motion.p

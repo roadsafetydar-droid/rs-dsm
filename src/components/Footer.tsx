@@ -30,7 +30,7 @@ export default function Footer() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
               <span style={{ fontWeight: 700, fontSize: 16, color: "#0F172A" }}>
-                Road Safety <span style={{ color: "#3B82F6" }}>Dar</span>
+                Dar es Salaam <span style={{ color: "#3B82F6" }}>Road Safety</span>
               </span>
             </div>
             <p style={{ margin: 0, fontSize: 13, color: "#64748B", lineHeight: 1.6, maxWidth: 260 }}>
@@ -44,7 +44,6 @@ export default function Footer() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
                 { href: "/", label: "Home" },
-                { href: "/dashboard", label: "Dashboard" },
                 { href: "/report", label: "Report Accident" },
                 { href: "/login", label: "Sign In" },
               ].map((l) => (
@@ -56,16 +55,13 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Districts */}
+          {/* Coverage */}
           <div>
             <h4 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em" }}>Coverage</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {["Ilala", "Kinondoni", "Temeke", "Ubungo", "Kigamboni"].map((d) => (
-                <Link key={d} href={`/dashboard?district=${d.toLowerCase()}`} style={{ color: "#475569", textDecoration: "none", fontSize: 14, fontWeight: 500, transition: "color 0.2s" }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "#3B82F6"}
-                  onMouseLeave={(e) => e.currentTarget.style.color = "#475569"}
-                >{d}</Link>
-              ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "#475569" }}>
+              <span>Ilala, Kinondoni, Temeke</span>
+              <span>Ubungo, Kigamboni</span>
+              <span style={{ fontSize: 12, color: "#94A3B8" }}>Dar es Salaam, Tanzania</span>
             </div>
           </div>
 
@@ -91,7 +87,7 @@ export default function Footer() {
           gap: 12,
         }}>
           <span style={{ fontSize: 13, color: "#94A3B8" }}>
-            &copy; {year} <strong style={{ color: "#64748B" }}>Road Safety Dar es Salaam</strong> — All Rights Reserved.
+            &copy; {year} <strong style={{ color: "#64748B" }}>Dar es Salaam Road Safety</strong> — All Rights Reserved.
           </span>
           <div style={{ display: "flex", gap: 16 }}>
             <Link href="/privacy" style={{ fontSize: 12, color: "#94A3B8", textDecoration: "none" }}>Privacy</Link>

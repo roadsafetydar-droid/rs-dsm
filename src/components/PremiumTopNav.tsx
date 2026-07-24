@@ -157,13 +157,15 @@ export default function PremiumTopNav({
     router.push("/login");
   };
 
-  // Build nav links based on variant
+  const isStaffUser = user && (user.role === "admin" || user.role === "police" || user.role === "tanroads" || user.isStaff || user.isSuperuser);
+
+  // Build nav links based on variant and auth status
   const links: { href: string; label: string; show: boolean }[] = [
     { href: "/", label: "Home", show: variant !== "login" && variant !== "editor" && variant !== "authority" },
-    { href: "/dashboard", label: "Dashboard", show: variant !== "login" },
-    { href: "/report", label: "Report", show: variant !== "login" && variant !== "editor" },
-    { href: "/editor", label: "Queue", show: variant === "editor" || (user?.isStaff && variant !== "login") },
-    { href: "/authority", label: "Authority", show: variant === "authority" || (user?.isSuperuser && variant !== "login") },
+    { href: "/report", label: "Report Accident", show: variant !== "login" && variant !== "editor" && variant !== "authority" },
+    { href: "/dashboard", label: "Dashboard", show: !!isStaffUser && variant !== "login" },
+    { href: "/editor", label: "Queue", show: !!isStaffUser && (variant === "editor" || variant !== "login") },
+    { href: "/authority", label: "Authority", show: !!isStaffUser && (variant === "authority" || variant !== "login") },
   ].filter((l): l is { href: string; label: string; show: true } => l.show === true);
 
   const isActive = (href: string) => {
@@ -249,14 +251,14 @@ export default function PremiumTopNav({
               }}
             />
             <span style={{ whiteSpace: "nowrap" }}>
-              Road Safety{" "}
+              Dar es Salaam{" "}
               <span
                 style={{
                   color: scrolled ? ACCENT : "#93C5FD",
                   transition: "color 0.25s",
                 }}
               >
-                Dar
+                Road Safety
               </span>
             </span>
           </Link>
@@ -376,8 +378,8 @@ export default function PremiumTopNav({
                         {user.email}
                       </div>
                       {user.role && user.role !== "community" && (
-                        <div style={{ marginTop: 6, display: "inline-block", fontSize: 11, fontWeight: 700, color: "#fff", background: user.isSuperuser ? "#DC2626" : user.isStaff ? ACCENT : "#64748B", padding: "2px 8px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                          {user.isSuperuser ? "Admin" : user.isStaff ? "Editor" : user.role}
+                        <div style={{ marginTop: 6, display: "inline-block", fontSize: 11, fontWeight: 700, color: "#fff", background: user.role === "admin" ? "#DC2626" : user.role === "police" ? "#3B82F6" : "#FBBF24", padding: "2px 8px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                          {user.role === "admin" ? "Admin" : user.role === "police" ? "Police Officer" : user.role === "tanroads" ? "TANROADS Officer" : user.role}
                         </div>
                       )}
                     </div>
@@ -396,44 +398,7 @@ export default function PremiumTopNav({
                     >
                       👤 My Profile
                     </Link>
-                    {!user.isGuest && (
-                      <button
-                        onClick={async () => {
-                          setUserMenuOpen(false);
-                          try {
-                            const res = await fetch("/api/auth/sync-role", { method: "POST" });
-                            const data = await res.json();
-                            if (data.ok) {
-                              // Refresh user data in localStorage
-                              const stored = localStorage.getItem("rsd_user");
-                              if (stored) {
-                                const parsed = JSON.parse(stored);
-                                parsed.role = data.role;
-                                localStorage.setItem("rsd_user", JSON.stringify(parsed));
-                                window.dispatchEvent(new Event("rsd:user-changed"));
-                              }
-                              router.refresh();
-                            }
-                          } catch {}
-                        }}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "10px 16px",
-                          background: "none",
-                          border: "none",
-                          borderBottom: "1px solid #F1F5F9",
-                          color: "#3B82F6",
-                          fontSize: 14,
-                          fontWeight: 500,
-                          cursor: "pointer",
-                        }}
-                      >
-                        🔄 Fix My Role
-                      </button>
-                    )}
-                    {user.isStaff && !user.isGuest && (
+                    {(user.role === "admin" || user.role === "police") && (
                       <Link
                         href="/editor"
                         onClick={() => setUserMenuOpen(false)}
@@ -450,7 +415,7 @@ export default function PremiumTopNav({
                         📋 Review Queue
                       </Link>
                     )}
-                    {user.isSuperuser && !user.isGuest && (
+                    {(user.role === "admin" || user.role === "police" || user.role === "tanroads") && (
                       <Link
                         href="/authority"
                         onClick={() => setUserMenuOpen(false)}
@@ -502,25 +467,6 @@ export default function PremiumTopNav({
                   }}
                 >
                   Sign In
-                </Link>
-                <Link
-                  href="/login?mode=register"
-                  className="rsd-nav-desktop"
-                  style={{
-                    color: scrolled ? "#fff" : ACCENT_DARK,
-                    background: scrolled ? ACCENT : "#fff",
-                    textDecoration: "none",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    padding: "8px 16px",
-                    borderRadius: 999,
-                    boxShadow: scrolled
-                      ? "0 2px 8px rgba(59, 130, 246, 0.3)"
-                      : "0 2px 8px rgba(0, 0, 0, 0.12)",
-                    transition: "transform 0.15s, box-shadow 0.15s",
-                  }}
-                >
-                  Register
                 </Link>
               </>
             )}
@@ -632,7 +578,7 @@ export default function PremiumTopNav({
                   <div style={{ padding: "8px 16px", color: "#0F172A", fontSize: 14, fontWeight: 500, wordBreak: "break-all" }}>
                     {user.email}
                   </div>
-                  {user.isStaff && !user.isGuest && (
+                  {(user.role === "admin" || user.role === "police") && (
                     <Link
                       href="/editor"
                       onClick={() => setMobileOpen(false)}
@@ -641,7 +587,7 @@ export default function PremiumTopNav({
                       📋 Review Queue
                     </Link>
                   )}
-                  {user.isSuperuser && !user.isGuest && (
+                  {(user.role === "admin" || user.role === "police" || user.role === "tanroads") && (
                     <Link
                       href="/authority"
                       onClick={() => setMobileOpen(false)}
@@ -669,42 +615,23 @@ export default function PremiumTopNav({
                   </button>
                 </>
               ) : (
-                <>
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileOpen(false)}
-                    style={{
-                      margin: "12px 16px 6px",
-                      padding: "12px 16px",
-                      background: "#F1F5F9",
-                      color: "#0F172A",
-                      textDecoration: "none",
-                      fontSize: 15,
-                      fontWeight: 700,
-                      borderRadius: 10,
-                      textAlign: "center",
-                    }}
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/login?mode=register"
-                    onClick={() => setMobileOpen(false)}
-                    style={{
-                      margin: "6px 16px 12px",
-                      padding: "12px 16px",
-                      background: ACCENT,
-                      color: "#fff",
-                      textDecoration: "none",
-                      fontSize: 15,
-                      fontWeight: 700,
-                      borderRadius: 10,
-                      textAlign: "center",
-                    }}
-                  >
-                    Register
-                  </Link>
-                </>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    margin: "12px 16px",
+                    padding: "12px 16px",
+                    background: ACCENT,
+                    color: "#fff",
+                    textDecoration: "none",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    textAlign: "center",
+                  }}
+                >
+                  Sign In
+                </Link>
               )}
             </nav>
           </div>

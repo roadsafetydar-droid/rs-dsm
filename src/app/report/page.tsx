@@ -186,7 +186,7 @@ export default function ReportPage() {
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <img src="/accident-protection.png" alt="" style={{ width: 28, height: 28 }} />
             <span style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: "-0.02em" }}>
-              Road Safety <span style={{ color: ACCENT }}>Dar</span>
+              Dar es Salaam <span style={{ color: ACCENT }}>Road Safety</span>
             </span>
           </Link>
         </div>

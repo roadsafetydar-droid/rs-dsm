@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import PremiumTopNav from "@/components/PremiumTopNav";
 import { createClient } from "@/lib/supabase-browser";
 
@@ -119,23 +118,6 @@ export default function LoginPage() {
             border: "1px solid rgba(15, 23, 42, 0.04)",
           }}
         >
-          {/* Toggle between Sign In and Register */}
-          <div style={{ display: "flex", background: "#F1F5F9", borderRadius: 999, padding: 4, marginBottom: 24 }}>
-            <div style={{
-              flex: 1, padding: "10px 16px", borderRadius: 999,
-              background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 700,
-              textAlign: "center", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
-            }}>
-              Sign In
-            </div>
-            <Link href="/register" style={{
-              flex: 1, padding: "10px 16px", textDecoration: "none", borderRadius: 999,
-              fontSize: 14, fontWeight: 700, textAlign: "center", color: "#64748B",
-            }}>
-              Register
-            </Link>
-          </div>
-
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <img src="/sign-in.png" alt="" style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 10 }} />
             <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 700, color: "#0F172A" }}>Welcome Back</h2>
@@ -238,14 +220,6 @@ export default function LoginPage() {
               {loading ? "Please wait…" : "Sign In"}
             </button>
           </form>
-
-          {/* Register link */}
-          <div style={{ textAlign: "center", fontSize: 14, color: "#475569" }}>
-            Don&apos;t have an account?{" "}
-            <Link href="/register" style={{ color: "#3B82F6", fontWeight: 700, textDecoration: "none" }}>
-              Register
-            </Link>
-          </div>
 
           {/* Divider before guest */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 16px" }}>
