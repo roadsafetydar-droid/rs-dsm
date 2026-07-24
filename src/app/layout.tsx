@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import LoadingScreenWrapper from "@/components/LoadingScreenWrapper";
 
 export const metadata: Metadata = {
@@ -27,8 +28,10 @@ export default function RootLayout({
         <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" defer />
       </head>
       <body>
-        <LoadingScreenWrapper />
-        {children}
+        <I18nProvider>
+          <LoadingScreenWrapper />
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

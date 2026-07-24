@@ -103,7 +103,7 @@ export default function AuthorityPage() {
   const handleToggleActive = async (userId: number, currentValue: boolean) => {
     setActionId(userId); setError(""); setSuccess("");
     try {
-      const res = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, action: "update_flags", isActive: !currentValue }) });
+      const res = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, action: "update_status", isActive: !currentValue }) });
       if (!res.ok) throw new Error((await res.json()).error || "Failed");
       setSuccess(`User ${!currentValue ? "activated" : "deactivated"}`); loadUsers();
     } catch (e: any) { setError(e?.message || "Failed"); }
@@ -506,12 +506,12 @@ export default function AuthorityPage() {
                           <td style={{ padding: "12px 16px", textAlign: "center" }}>
                             <select value={currentRole} onChange={e => handleRoleChange(u.id, e.target.value)} disabled={actionId === u.id} style={{
                               padding: "6px 10px", borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12, background: "#fff", cursor: "pointer",
-                              fontWeight: currentRole === "admin" ? 700 : 400,
-                              color: currentRole === "admin" ? "#DC2626" : currentRole === "police" ? "#3B82F6" : currentRole === "tanroads" ? "#FBBF24" : "#475569",
+                              fontWeight: currentRole === "ADMIN" ? 700 : 400,
+                              color: currentRole === "ADMIN" ? "#DC2626" : currentRole === "TRAFFIC_POLICE" ? "#3B82F6" : currentRole === "TANROADS" ? "#FBBF24" : "#475569",
                             }}>
-                              <option value="police">🚦 Traffic Police</option>
-                              <option value="tanroads">🏗️ TANROADS</option>
-                              <option value="admin">⭐ Admin</option>
+                              <option value="TRAFFIC_POLICE">🚦 Traffic Police</option>
+                              <option value="TANROADS">🏗️ TANROADS</option>
+                              <option value="ADMIN">⭐ Admin</option>
                             </select>
                           </td>
                           <td style={{ padding: "12px 16px", textAlign: "center" }}>

@@ -237,9 +237,6 @@ export default function ReportPage() {
               <Link href="/login" style={{ fontSize: 13, fontWeight: 600, color: "#64748B", textDecoration: "none", padding: "6px 12px" }}>
                 Sign In
               </Link>
-              <Link href="/login?mode=register" style={{ fontSize: 13, fontWeight: 700, color: "#fff", background: ACCENT, textDecoration: "none", padding: "6px 14px", borderRadius: 8 }}>
-                Register
-              </Link>
             </div>
           </div>
         </header>

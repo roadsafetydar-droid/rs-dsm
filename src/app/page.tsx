@@ -5,6 +5,7 @@ import Link from "next/link";
 import PremiumTopNav from "@/components/PremiumTopNav";
 import CountUp from "@/components/CountUp";
 import ScrollReveal from "@/components/ScrollReveal";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 interface Stats {
   total: number;
@@ -26,6 +27,7 @@ interface Stats {
 }
 
 export default function Home() {
+  const { t } = useI18n();
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {

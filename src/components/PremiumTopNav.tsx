@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 interface NavUser {
   email: string;
@@ -27,6 +28,7 @@ export default function PremiumTopNav({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t, locale, setLocale } = useI18n();
   const [user, setUser] = useState<NavUser | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -157,15 +159,15 @@ export default function PremiumTopNav({
     router.push("/login");
   };
 
-  const isStaffUser = user && (user.role === "admin" || user.role === "police" || user.role === "tanroads" || user.isStaff || user.isSuperuser);
+  const isStaffUser = user && (user.role === "ADMIN" || user.role === "TRAFFIC_POLICE" || user.role === "TANROADS" || user.isStaff || user.isSuperuser);
 
   // Build nav links based on variant and auth status
   const links: { href: string; label: string; show: boolean }[] = [
-    { href: "/", label: "Home", show: variant !== "login" && variant !== "editor" && variant !== "authority" },
-    { href: "/report", label: "Report Accident", show: variant !== "login" && variant !== "editor" && variant !== "authority" },
-    { href: "/dashboard", label: "Dashboard", show: !!isStaffUser && variant !== "login" },
-    { href: "/editor", label: "Queue", show: !!isStaffUser && (variant === "editor" || variant !== "login") },
-    { href: "/authority", label: "Authority", show: !!isStaffUser && (variant === "authority" || variant !== "login") },
+    { href: "/", label: t("nav.home"), show: variant !== "login" && variant !== "editor" && variant !== "authority" },
+    { href: "/report", label: t("nav.report"), show: variant !== "login" && variant !== "editor" && variant !== "authority" },
+    { href: "/dashboard", label: t("nav.dashboard"), show: !!isStaffUser && variant !== "login" },
+    { href: "/editor", label: t("nav.editor"), show: !!isStaffUser && (variant === "editor" || variant !== "login") },
+    { href: "/authority", label: t("nav.authority"), show: !!isStaffUser && (variant === "authority" || variant !== "login") },
   ].filter((l): l is { href: string; label: string; show: true } => l.show === true);
 
   const isActive = (href: string) => {
@@ -378,8 +380,8 @@ export default function PremiumTopNav({
                         {user.email}
                       </div>
                       {user.role && user.role !== "community" && (
-                        <div style={{ marginTop: 6, display: "inline-block", fontSize: 11, fontWeight: 700, color: "#fff", background: user.role === "admin" ? "#DC2626" : user.role === "police" ? "#3B82F6" : "#FBBF24", padding: "2px 8px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                          {user.role === "admin" ? "Admin" : user.role === "police" ? "Police Officer" : user.role === "tanroads" ? "TANROADS Officer" : user.role}
+                        <div style={{ marginTop: 6, display: "inline-block", fontSize: 11, fontWeight: 700, color: "#fff", background: user.role === "ADMIN" ? "#DC2626" : user.role === "TRAFFIC_POLICE" ? "#3B82F6" : "#FBBF24", padding: "2px 8px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                          {user.role === "ADMIN" ? t("role.admin") : user.role === "TRAFFIC_POLICE" ? t("role.traffic_police") : user.role === "TANROADS" ? t("role.tanroads") : user.role}
                         </div>
                       )}
                     </div>
@@ -398,37 +400,13 @@ export default function PremiumTopNav({
                     >
                       👤 My Profile
                     </Link>
-                    {(user.role === "admin" || user.role === "police") && (
-                      <Link
-                        href="/editor"
-                        onClick={() => setUserMenuOpen(false)}
-                        style={{
-                          display: "block",
-                          padding: "10px 16px",
-                          color: "#0F172A",
-                          textDecoration: "none",
-                          fontSize: 14,
-                          fontWeight: 500,
-                          borderBottom: "1px solid #F1F5F9",
-                        }}
-                      >
+                    {(user.role === "ADMIN" || user.role === "TRAFFIC_POLICE") && (
+                      <Link href="/editor" onClick={() => setUserMenuOpen(false)} style={{ display: "block", padding: "10px 16px", color: "#0F172A", textDecoration: "none", fontSize: 14, fontWeight: 500, borderBottom: "1px solid #F1F5F9" }}>
                         📋 Review Queue
                       </Link>
                     )}
-                    {(user.role === "admin" || user.role === "police" || user.role === "tanroads") && (
-                      <Link
-                        href="/authority"
-                        onClick={() => setUserMenuOpen(false)}
-                        style={{
-                          display: "block",
-                          padding: "10px 16px",
-                          color: "#0F172A",
-                          textDecoration: "none",
-                          fontSize: 14,
-                          fontWeight: 500,
-                          borderBottom: "1px solid #F1F5F9",
-                        }}
-                      >
+                    {(user.role === "ADMIN" || user.role === "TRAFFIC_POLICE" || user.role === "TANROADS") && (
+                      <Link href="/authority" onClick={() => setUserMenuOpen(false)} style={{ display: "block", padding: "10px 16px", color: "#0F172A", textDecoration: "none", fontSize: 14, fontWeight: 500, borderBottom: "1px solid #F1F5F9" }}>
                         🏛️ Authority Console
                       </Link>
                     )}
@@ -454,22 +432,26 @@ export default function PremiumTopNav({
               </div>
             ) : (
               <>
-                <Link
-                  href="/login"
-                  className="rsd-nav-desktop"
-                  style={{
-                    color: textColor,
-                    textDecoration: "none",
-                    fontWeight: 600,
-                    fontSize: 14,
-                    padding: "8px 14px",
-                    borderRadius: 10,
-                  }}
-                >
+                <Link href="/login" className="rsd-nav-desktop" style={{ color: textColor, textDecoration: "none", fontWeight: 600, fontSize: 14, padding: "8px 14px", borderRadius: 10 }}>
                   Sign In
                 </Link>
               </>
             )}
+
+            {/* Language Switcher */}
+            <button
+              onClick={() => setLocale(locale === "en" ? "sw" : "en")}
+              aria-label={t("nav.language")}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4, padding: "6px 10px", minHeight: 36,
+                border: `1px solid ${scrolled ? "#CBD5E1" : "rgba(255,255,255,0.3)"}`,
+                borderRadius: 8, background: scrolled ? "#fff" : "rgba(255,255,255,0.1)",
+                color: textColor, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                transition: "all 0.2s", whiteSpace: "nowrap",
+              }}
+            >
+              {locale === "en" ? "🇹🇿 SW" : "🇬🇧 EN"}
+            </button>
 
             {/* Mobile hamburger */}
             <button
@@ -578,21 +560,13 @@ export default function PremiumTopNav({
                   <div style={{ padding: "8px 16px", color: "#0F172A", fontSize: 14, fontWeight: 500, wordBreak: "break-all" }}>
                     {user.email}
                   </div>
-                  {(user.role === "admin" || user.role === "police") && (
-                    <Link
-                      href="/editor"
-                      onClick={() => setMobileOpen(false)}
-                      style={{ padding: "12px 16px", color: "#0F172A", textDecoration: "none", fontSize: 15, fontWeight: 600 }}
-                    >
+                  {(user.role === "ADMIN" || user.role === "TRAFFIC_POLICE") && (
+                    <Link href="/editor" onClick={() => setMobileOpen(false)} style={{ padding: "12px 16px", color: "#0F172A", textDecoration: "none", fontSize: 15, fontWeight: 600 }}>
                       📋 Review Queue
                     </Link>
                   )}
-                  {(user.role === "admin" || user.role === "police" || user.role === "tanroads") && (
-                    <Link
-                      href="/authority"
-                      onClick={() => setMobileOpen(false)}
-                      style={{ padding: "12px 16px", color: "#0F172A", textDecoration: "none", fontSize: 15, fontWeight: 600 }}
-                    >
+                  {(user.role === "ADMIN" || user.role === "TRAFFIC_POLICE" || user.role === "TANROADS") && (
+                    <Link href="/authority" onClick={() => setMobileOpen(false)} style={{ padding: "12px 16px", color: "#0F172A", textDecoration: "none", fontSize: 15, fontWeight: 600 }}>
                       🏛️ Authority Console
                     </Link>
                   )}
