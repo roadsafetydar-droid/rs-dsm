@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import PremiumTopNav from "@/components/PremiumTopNav";
 import { createClient } from "@/lib/supabase-browser";
@@ -18,13 +18,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>(null);
 
-  const supabase = createClient();
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const getSupabase = () => {
+    if (!supabaseRef.current) supabaseRef.current = createClient();
+    return supabaseRef.current;
+  };
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await getSupabase().auth.getSession();
         if (cancelled) return;
         if (data.session) {
           router.replace("/dashboard");
@@ -37,7 +41,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setError("");
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await getSupabase().auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
@@ -50,7 +54,7 @@ export default function LoginPage() {
     setApprovalStatus(null);
     setLoading(true);
 
-    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: err } = await getSupabase().auth.signInWithPassword({ email, password });
 
     if (err) {
       setError(err.message);
@@ -68,7 +72,7 @@ export default function LoginPage() {
           const status = userData.status || "active";
           if (status === "pending" || status === "rejected" || status === "disabled") {
             setApprovalStatus(status);
-            await supabase.auth.signOut();
+            await getSupabase().auth.signOut();
             setLoading(false);
             return;
           }
